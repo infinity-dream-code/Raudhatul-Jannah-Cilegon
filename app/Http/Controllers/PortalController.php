@@ -16,7 +16,7 @@ class PortalController extends Controller
         }
 
         if (session('auth_module') === 'sikeu') {
-            return redirect()->route('admin.index');
+            return redirect('/admin');
         }
 
         $user = Auth::user();
@@ -35,13 +35,15 @@ class PortalController extends Controller
         }
 
         $request->session()->put('auth_module', 'sikeu');
+        $request->session()->save();
 
         $targetUrl = trim((string) (config('sso.modules.sikeu.url') ?? ''));
         if (preg_match('/^https?:\/\//i', $targetUrl) === 1) {
             return redirect()->away($targetUrl);
         }
 
-        return redirect()->route('admin.index');
+        // Relative — tidak tergantung APP_URL di .env
+        return redirect('/admin');
     }
 
     public function switchModule(Request $request): RedirectResponse
@@ -52,6 +54,6 @@ class PortalController extends Controller
 
         $request->session()->forget(['auth_module']);
 
-        return redirect()->route('portal');
+        return redirect('/portal');
     }
 }

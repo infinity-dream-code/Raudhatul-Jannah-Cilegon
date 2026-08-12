@@ -266,7 +266,7 @@
         </div>
 
         <div class="grid">
-            <a class="card" href="{{ route('portal.sikeu') }}" style="--accent:#0ea5e9;">
+            <a class="card" href="/portal/sikeu" style="--accent:#0ea5e9;">
                 <div class="card-top">
                     <div class="icon" style="background:#0ea5e9;"><i class="fa-solid fa-wallet"></i></div>
                 </div>

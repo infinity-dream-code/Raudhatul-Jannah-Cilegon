@@ -12,6 +12,8 @@ class CyberKey extends Model implements AuthenticatableContract
 
     protected $table = "cyber_key";
 
+    protected $connection = "DATA_MYSQL";
+
     protected $primaryKey = "urut";
 
     public $incrementing = true;

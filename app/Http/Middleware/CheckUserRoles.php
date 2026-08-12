@@ -36,6 +36,6 @@ class CheckUserRoles
             }
         }
 
-        abort(404, 'Halaman Tidak Ditemukan!');
+        return redirect('/portal')->with('portal_info', 'Anda tidak memiliki akses ke modul tersebut.');
     }
 }

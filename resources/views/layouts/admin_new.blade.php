@@ -215,7 +215,7 @@
                                 {{--                                </li>--}}
                                 <li>
                                     <div class="d-grid px-4 pt-2 pb-1 gap-2">
-                                        <a href="{{ route('portal.switch') }}" class="btn btn-sm btn-outline-primary d-flex justify-content-center">
+                                        <a href="/portal/switch" class="btn btn-sm btn-outline-primary d-flex justify-content-center">
                                             <small class="align-middle">Portal</small>
                                             <i class="ri-apps-2-line ms-2 ri-16px"></i>
                                         </a>
