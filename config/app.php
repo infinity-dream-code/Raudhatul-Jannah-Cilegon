@@ -16,14 +16,14 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Bintang Juara'),
-    'nama_instansi' => env('APP_NAMA_INSTANSI', 'Sekolah Islam Bintang Juara'),
-    'alamat' => env('APP_ALAMAT', 'Kota Semarang, Prov. Jawa Tengah'),
+    'name' => env('APP_NAME', 'Raudhatul Jannah Cilegon'),
+    'nama_instansi' => env('APP_NAMA_INSTANSI', 'Raudhatul Jannah Cilegon'),
+    'alamat' => env('APP_ALAMAT', 'Cilegon, Prov. Banten'),
     'logo' => env('APP_LOGO', 'logo-bijur.jpeg'),
     'email' => env('APP_EMAIL', 'ypisabkho@gmail.com'),
     'telepon' => env('APP_TELEPON', 'SIKEU'),
-    'domisili' => env('APP_DOMISILI', 'Semarang'),
-    'nova' => env('APP_NOVA') ?: '797783',
+    'domisili' => env('APP_DOMISILI', 'Cilegon'),
+    'nova' => env('APP_NOVA') ?: '797792',
     'biaya_admin' => env('BIAYA_ADMIN', 0),
     'dummy_seeder' => env('DUMMY_SEEDER',false),
     'demo_mode' => env('DEMO_MODE',false),

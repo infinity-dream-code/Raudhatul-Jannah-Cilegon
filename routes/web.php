@@ -13,6 +13,12 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 Route::get("/reload-captcha", [AuthController::class, "reloadCaptcha"])->name("reload-captcha");
 Route::get("/reload-math-captcha", [\App\Http\Controllers\Auth\LoginController::class, "reloadMathCaptcha"])->name("reload-math-captcha");
 
+Route::middleware('auth')->group(function () {
+    Route::get('/portal', [\App\Http\Controllers\PortalController::class, 'index'])->name('portal');
+    Route::get('/portal/sikeu', [\App\Http\Controllers\PortalController::class, 'sikeu'])->name('portal.sikeu');
+    Route::get('/portal/switch', [\App\Http\Controllers\PortalController::class, 'switchModule'])->name('portal.switch');
+});
+
 Route::prefix("admin")
     ->name("admin.")
     ->middleware(["auth", "check.roles:admin"])

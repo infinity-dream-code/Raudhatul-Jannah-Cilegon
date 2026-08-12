@@ -286,7 +286,7 @@ SVG;
 
     protected function redirectTo(): string
     {
-        return "/admin";
+        return "/portal";
     }
 
     public function __construct()
@@ -326,7 +326,7 @@ SVG;
 
         $request->session()->regenerateToken();
 
-        $request->session()->forget(["auth_cf_fallback", "auth_math_answer"]);
+        $request->session()->forget(["auth_cf_fallback", "auth_math_answer", "auth_module"]);
 
         return redirect("/");
     }
