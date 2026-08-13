@@ -118,6 +118,15 @@ Route::prefix("admin")
                     Route::post("reset-password-bulk", "resetPasswordBulk")->name("reset-password-bulk");
                     Route::post("{id}/reset-password", "resetPassword")->name("reset-password")->whereNumber("id");
                 });
+
+            Route::prefix("setting-batasan")
+                ->name("setting-batasan.")
+                ->controller(\App\Http\Controllers\Admin\MasterData\SettingBatasanController::class)
+                ->group(function () {
+                    Route::get("", "index")->name("index");
+                    Route::post("", "store")->name("store");
+                    Route::put("{id}", "update")->name("update")->whereNumber("id");
+                });
         });
 
         Route::prefix("keuangan")->name("keuangan.")->group(function () {

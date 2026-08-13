@@ -74,6 +74,11 @@
                         <div data-i18n="User Kantin">User Kantin</div>
                     </a>
                 </li>
+                <li class="menu-item {{ Request::is(['admin/master-data/setting-batasan*']) ? 'active' : '' }}">
+                    <a href="{{ route('admin.master-data.setting-batasan.index') }}" class="menu-link">
+                        <div data-i18n="Setting Batasan">Setting Batasan</div>
+                    </a>
+                </li>
             </ul>
         </li>
         <li class="menu-item {{ Request::is(['admin/keuangan*']) ? 'active open' : '' }}">
