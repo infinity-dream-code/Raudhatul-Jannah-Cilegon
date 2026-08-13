@@ -274,6 +274,39 @@
                 <p>Sistem Informasi Keuangan.</p>
                 <span class="go">Buka aplikasi &rarr;</span>
             </a>
+
+            @if(($modules['facepay_admin']['enabled'] ?? false))
+                <a class="card" href="/portal/facepay-admin" style="--accent:#6366f1;" target="_blank" rel="noopener">
+                    <div class="card-top">
+                        <div class="icon" style="background:#6366f1;"><i class="fa-solid fa-face-smile"></i></div>
+                    </div>
+                    <h3>Admin Facepay</h3>
+                    <p>Kelola data siswa, rekam wajah, dan pantau saldo Facepay.</p>
+                    <span class="go">Buka aplikasi &rarr;</span>
+                </a>
+            @endif
+
+            @if(($modules['facepay_siswa']['enabled'] ?? false))
+                <a class="card" href="/portal/facepay-siswa" style="--accent:#14b8a6;" target="_blank" rel="noopener">
+                    <div class="card-top">
+                        <div class="icon" style="background:#14b8a6;"><i class="fa-solid fa-user-graduate"></i></div>
+                    </div>
+                    <h3>Siswa</h3>
+                    <p>Portal orang tua / siswa untuk rekam foto wajah.</p>
+                    <span class="go">Buka aplikasi &rarr;</span>
+                </a>
+            @endif
+
+            @if(($modules['facepay_kantin']['enabled'] ?? false))
+                <a class="card" href="/portal/facepay-kantin" style="--accent:#f59e0b;" target="_blank" rel="noopener">
+                    <div class="card-top">
+                        <div class="icon" style="background:#f59e0b;"><i class="fa-solid fa-store"></i></div>
+                    </div>
+                    <h3>Kantin</h3>
+                    <p>Login merchant kantin Facepay.</p>
+                    <span class="go">Buka aplikasi &rarr;</span>
+                </a>
+            @endif
         </div>
     </main>
 

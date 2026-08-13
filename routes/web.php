@@ -16,6 +16,9 @@ Route::get("/reload-math-captcha", [\App\Http\Controllers\Auth\LoginController::
 Route::middleware('auth')->group(function () {
     Route::get('/portal', [\App\Http\Controllers\PortalController::class, 'index'])->name('portal');
     Route::get('/portal/sikeu', [\App\Http\Controllers\PortalController::class, 'sikeu'])->name('portal.sikeu');
+    Route::get('/portal/facepay-admin', [\App\Http\Controllers\PortalController::class, 'facepayAdmin'])->name('portal.facepay-admin');
+    Route::get('/portal/facepay-siswa', [\App\Http\Controllers\PortalController::class, 'facepaySiswa'])->name('portal.facepay-siswa');
+    Route::get('/portal/facepay-kantin', [\App\Http\Controllers\PortalController::class, 'facepayKantin'])->name('portal.facepay-kantin');
     Route::get('/portal/switch', [\App\Http\Controllers\PortalController::class, 'switchModule'])->name('portal.switch');
 });
 

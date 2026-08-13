@@ -38,12 +38,26 @@ class PortalController extends Controller
         $request->session()->save();
 
         $targetUrl = trim((string) (config('sso.modules.sikeu.url') ?? ''));
-        if (preg_match('/^https?:\/\//i', $targetUrl) === 1) {
+        if ($this->isExternalUrl($targetUrl)) {
             return redirect()->away($targetUrl);
         }
 
-        // Relative — tidak tergantung APP_URL di .env
         return redirect('/admin');
+    }
+
+    public function facepayAdmin(): RedirectResponse
+    {
+        return $this->redirectExternalModule('facepay_admin');
+    }
+
+    public function facepaySiswa(): RedirectResponse
+    {
+        return $this->redirectExternalModule('facepay_siswa');
+    }
+
+    public function facepayKantin(): RedirectResponse
+    {
+        return $this->redirectExternalModule('facepay_kantin');
     }
 
     public function switchModule(Request $request): RedirectResponse
@@ -55,5 +69,26 @@ class PortalController extends Controller
         $request->session()->forget(['auth_module']);
 
         return redirect('/portal');
+    }
+
+    private function redirectExternalModule(string $key): RedirectResponse
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $enabled = (bool) config("sso.modules.{$key}.enabled", false);
+        $targetUrl = trim((string) (config("sso.modules.{$key}.url") ?? ''));
+
+        if (!$enabled || !$this->isExternalUrl($targetUrl)) {
+            return redirect('/portal')->with('portal_info', 'Modul belum tersedia.');
+        }
+
+        return redirect()->away($targetUrl);
+    }
+
+    private function isExternalUrl(string $url): bool
+    {
+        return preg_match('/^https?:\/\//i', $url) === 1;
     }
 }
