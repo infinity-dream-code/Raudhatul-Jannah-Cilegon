@@ -67,6 +67,11 @@
                         <div data-i18n="Pindah Kelas">Pindah Kelas</div>
                     </a>
                 </li>
+                <li class="menu-item {{ Request::is(['admin/master-data/user-kantin*']) ? 'active' : '' }}">
+                    <a href="{{ route('admin.master-data.user-kantin.index') }}" class="menu-link">
+                        <div data-i18n="User Kantin">User Kantin</div>
+                    </a>
+                </li>
             </ul>
         </li>
         <li class="menu-item {{ Request::is(['admin/keuangan*']) ? 'active open' : '' }}">

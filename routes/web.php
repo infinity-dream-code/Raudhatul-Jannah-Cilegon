@@ -108,6 +108,16 @@ Route::prefix("admin")
                     Route::get("get-column", "getColumn")->name("get-column");
                     Route::resource("", \App\Http\Controllers\Admin\MasterData\PindahKelasController::class)->parameters(["" => "id"]);
                 });
+
+            Route::prefix("user-kantin")
+                ->name("user-kantin.")
+                ->controller(\App\Http\Controllers\Admin\MasterData\UserKantinController::class)
+                ->group(function () {
+                    Route::get("", "index")->name("index");
+                    Route::post("", "store")->name("store");
+                    Route::post("reset-password-bulk", "resetPasswordBulk")->name("reset-password-bulk");
+                    Route::post("{id}/reset-password", "resetPassword")->name("reset-password")->whereNumber("id");
+                });
         });
 
         Route::prefix("keuangan")->name("keuangan.")->group(function () {

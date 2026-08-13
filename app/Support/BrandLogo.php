@@ -24,10 +24,10 @@ final class BrandLogo
 
         return array_values(array_unique(array_filter([
             $configured,
+            'icon.png',
             'logo.png',
             'logo.jpg',
             'logo.jpeg',
-            'logo-bijur.jpeg',
             'images/logo.png',
         ])));
     }
