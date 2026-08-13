@@ -47,11 +47,13 @@
                         <div data-i18n="Tahun Akademik">Tahun Akademik</div>
                     </a>
                 </li>
+                {{-- Master Tagihan disembunyikan untuk Raudhatul Jannah Cilegon
                 <li class="menu-item {{ Request::is(['admin/master-data/master-tagihan*']) ? 'active' : '' }}">
                     <a href="{{ route('admin.master-data.master-tagihan.index') }}" class="menu-link">
                         <div data-i18n="Master Tagihan">Master Tagihan</div>
                     </a>
                 </li>
+                --}}
                 <li class="menu-item {{ Request::is(['admin/master-data/export-import-data*']) ? 'active' : '' }}">
                     <a href="{{ route('admin.master-data.export-import-data.index') }}" class="menu-link">
                         <div data-i18n="Export Import Data">Export Import Data</div>
@@ -136,6 +138,7 @@
                 </li>
             </ul>
         </li>
+        {{-- Manual Input disembunyikan untuk Raudhatul Jannah Cilegon
         <li class="menu-item {{ Request::is(['admin/manual-input*']) ? 'active open' : '' }}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon ri ri-edit-2-line"></i>
@@ -149,6 +152,7 @@
                 </li>
             </ul>
         </li>
+        --}}
 
         <li class="menu-item mt-auto pb-2">
             <a href="{{route('logout')}}" class="menu-link btn-danger text-white"  onclick="event.preventDefault();
