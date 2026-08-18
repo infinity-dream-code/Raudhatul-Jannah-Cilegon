@@ -81,49 +81,13 @@
                 </li>
             </ul>
         </li>
-        <li class="menu-item {{ Request::is(['admin/keuangan*']) ? 'active open' : '' }}">
+        <li class="menu-item {{ Request::is(['admin/keuangan/saldo*']) ? 'active open' : '' }}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon ri ri-wallet-3-line"></i>
                 <div data-i18n="Keuangan">Keuangan</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item {{ Request::is(['admin/keuangan/tagihan-siswa*']) ? 'active open' : '' }}">
-                    <a href="javascript:void(0)" class="menu-link menu-toggle">
-                        <div data-i18n="Tagihan Siswa">Tagihan Siswa</div>
-                    </a>
-                    <ul class="menu-sub">
-                        <li class="menu-item {{ Request::is(['admin/keuangan/tagihan-siswa/upload-tagihan-excel*']) ? 'active' : '' }}">
-                            <a href="{{ route('admin.keuangan.tagihan-siswa.upload-tagihan-excel.index') }}" class="menu-link">
-                                <div data-i18n="Buat Tagihan Excel">Buat Tagihan Excel</div>
-                            </a>
-                        </li>
-                        <li class="menu-item {{ Request::is(['admin/keuangan/tagihan-siswa/data-tagihan*']) ? 'active' : '' }}">
-                            <a href="{{ route('admin.keuangan.tagihan-siswa.data-tagihan.index') }}" class="menu-link">
-                                <div data-i18n="Data Tagihan">Data Tagihan</div>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                <li class="menu-item {{ Request::is(['admin/keuangan/manual-pembayaran*']) ? 'active' : '' }}">
-                    <a href="{{ route('admin.keuangan.manual-pembayaran.index') }}" class="menu-link">
-                        <div data-i18n="Manual Pembayaran">Manual Pembayaran</div>
-                    </a>
-                </li>
-                <li class="menu-item {{ Request::is(['admin/keuangan/penerimaan-siswa/data-penerimaan*']) ? 'active' : '' }}">
-                    <a href="{{ route('admin.keuangan.penerimaan-siswa.data-penerimaan.index') }}" class="menu-link">
-                        <div data-i18n="Data Tagihan Lunas">Data Tagihan Lunas</div>
-                    </a>
-                </li>
-                <li class="menu-item {{ Request::is(['admin/keuangan/penerimaan-siswa/rekap-penerimaan*']) ? 'active' : '' }}">
-                    <a href="{{ route('admin.keuangan.penerimaan-siswa.rekap-penerimaan.index') }}" class="menu-link">
-                        <div data-i18n="Data Pembayaran">Data Pembayaran</div>
-                    </a>
-                </li>
-                <li class="menu-item {{ Request::is(['admin/keuangan/data-transfer-va*']) ? 'active' : '' }}">
-                    <a href="{{ route('admin.keuangan.data-transfer-va.index') }}" class="menu-link">
-                        <div data-i18n="Data Transfer VA">Data Transfer VA</div>
-                    </a>
-                </li>
+                {{-- Menu keuangan selain Saldo disembunyikan untuk Raudhatul Jannah Cilegon --}}
                 <li class="menu-item {{ Request::is(['admin/keuangan/saldo*']) ? 'active open' : '' }}">
                     <a href="javascript:void(0);" class="menu-link menu-toggle">
                         <div data-i18n="Saldo">Saldo</div>
@@ -135,11 +99,6 @@
                             </a>
                         </li>
                     </ul>
-                </li>
-                <li class="menu-item {{ Request::is(['admin/keuangan/hapus-tagihan*']) ? 'active' : '' }}">
-                    <a href="{{ route('admin.keuangan.hapus-tagihan.index') }}" class="menu-link">
-                        <div data-i18n="Hapus Tagihan">Hapus Tagihan</div>
-                    </a>
                 </li>
             </ul>
         </li>

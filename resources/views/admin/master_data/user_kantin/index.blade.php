@@ -70,8 +70,6 @@
                     <th class="text-center" style="width:60px;">No</th>
                     <th>Nama Kantin</th>
                     <th>Username</th>
-                    <th>Kode Kantin</th>
-                    <th>Kode Merchant</th>
                     <th class="text-center" style="width:140px;">Aksi</th>
                 </tr>
                 </thead>
@@ -85,8 +83,6 @@
                         <td class="text-center">{{ $rows->firstItem() + $loop->index }}</td>
                         <td>{{ $item->NamaKantin ?: '-' }}</td>
                         <td>{{ $item->username ?: '-' }}</td>
-                        <td>{{ $item->KDKANTIN ?: '-' }}</td>
-                        <td>{{ $item->KDMERCAN ?: '-' }}</td>
                         <td class="text-center">
                             <button type="button"
                                     class="btn btn-sm btn-warning btn-reset"
@@ -99,7 +95,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">Belum ada data user kantin.</td>
+                        <td colspan="5" class="text-center text-muted py-4">Belum ada data user kantin.</td>
                     </tr>
                 @endforelse
                 </tbody>
