@@ -95,7 +95,7 @@
                     <ul class="menu-sub">
                         <li class="menu-item {{ Request::is(['admin/keuangan/saldo/saldo-virtual-account*']) ? 'active' : '' }}">
                             <a href="{{ route('admin.keuangan.saldo.saldo-virtual-account.index') }}" class="menu-link">
-                                <div data-i18n="Saldo Virtual Account">Saldo Virtual Account</div>
+                                <div data-i18n="Saldo Usaku">Saldo Usaku</div>
                             </a>
                         </li>
                     </ul>

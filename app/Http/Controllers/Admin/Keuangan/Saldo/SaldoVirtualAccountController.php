@@ -8,7 +8,7 @@ use App\Models\mst_kelas;
 use App\Models\mst_sekolah;
 use App\Models\mst_thn_aka;
 use App\Models\scctcust;
-use App\Models\sccttran;
+use App\Models\SccttranCashless;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -25,15 +25,15 @@ class SaldoVirtualAccountController extends Controller
     public string $detailDatasUrl = '';
     public string $columnsUrl = '';
     private string $title = "Saldo";
-    private string $mainTitle = 'Saldo Virtual Account';
-    private string $dataTitle = 'Saldo Virtual Account';
-    private string $showTitle = 'Detail Saldo  Virtual Account';
+    private string $mainTitle = 'Saldo Usaku';
+    private string $dataTitle = 'Saldo Usaku';
+    private string $showTitle = 'Detail Saldo Usaku';
     private string $cacheKey = 'saldo_virtual_account';
 
     /** Pembayaran manual cash — tidak masuk saldo/jurnal VA. */
     private const FIDBANK_MANUAL_CASH = '1140000';
 
-    /** Tampilkan semua transaksi sccttran kecuali manual cash (1140000). */
+    /** Transaksi dari sccttran_cashless; exclude FIDBANK manual cash jika ada. */
     private function excludeManualCashScope($query, string $fidBankColumn = 'FIDBANK')
     {
         return $query->where(function ($q) use ($fidBankColumn) {
@@ -93,8 +93,8 @@ class SaldoVirtualAccountController extends Controller
 
         $this->title = 'Keuangan';
         $this->mainTitle = 'Saldo';
-        $this->dataTitle = 'Saldo Virtual Account';
-        $this->showTitle = 'Detail Saldo  Virtual Account';
+        $this->dataTitle = 'Saldo Usaku';
+        $this->showTitle = 'Detail Saldo Usaku';
 
 
         $this->datasUrl = route('admin.keuangan.saldo.saldo-virtual-account.get-data');
@@ -150,10 +150,10 @@ class SaldoVirtualAccountController extends Controller
                 }
                 $data['siswa']->NOVA = $NOVA;
 
-                $data['totalKredit'] = (int) $this->excludeManualCashScope(sccttran::query())
+                $data['totalKredit'] = (int) $this->excludeManualCashScope(SccttranCashless::query())
                     ->where('CUSTID', $id)
                     ->sum('KREDIT');
-                $data['totalDebet'] = (int) $this->excludeManualCashScope(sccttran::query())
+                $data['totalDebet'] = (int) $this->excludeManualCashScope(SccttranCashless::query())
                     ->where('CUSTID', $id)
                     ->sum('DEBET');
 //                $data['siswa']-> = $NOVA;
@@ -258,7 +258,7 @@ class SaldoVirtualAccountController extends Controller
     private function getCustTransactions(string|int $custId)
     {
         return $this->excludeManualCashScope(
-            sccttran::query()->where('CUSTID', $custId),
+            SccttranCashless::query()->where('CUSTID', $custId),
             'FIDBANK'
         )
             ->orderBy('TRXDATE', 'desc')
@@ -392,7 +392,7 @@ class SaldoVirtualAccountController extends Controller
             'scctcust.DESC04',
         ]));
 
-        $saldoAgg = $this->excludeManualCashScope(sccttran::query())
+        $saldoAgg = $this->excludeManualCashScope(SccttranCashless::query())
             ->select([
                 'CUSTID',
                 DB::raw('COALESCE(SUM(KREDIT), 0) AS kredit'),
@@ -487,7 +487,7 @@ class SaldoVirtualAccountController extends Controller
         $columnName_arr = $request->get('columns');
         $search_arr = $request->get('search');
 
-        $defaultColumn = 'sccttran.TRXDATE';
+        $defaultColumn = 'sccttran_cashless.TRXDATE';
         $defaultOrder = 'desc';
 
         if ($request->has('order') && !empty($request->get('order'))) {
@@ -508,7 +508,7 @@ class SaldoVirtualAccountController extends Controller
         }
 
         if (!str_contains($columnName, '.')) {
-            $columnName = 'sccttran.' . $columnName;
+            $columnName = 'sccttran_cashless.' . $columnName;
         }
 
         $filter = $request->input('filter');
@@ -528,31 +528,31 @@ class SaldoVirtualAccountController extends Controller
         }
 
         if ($custid) {
-            $filters[] = ['sccttran.CUSTID', '=', $custid];
+            $filters[] = ['sccttran_cashless.CUSTID', '=', $custid];
         }
 
         $whereAny = [
             'scctcust.NMCUST',
             'scctcust.NOCUST',
             'scctcust.NUM2ND',
-            'sccttran.METODE',
+            'sccttran_cashless.METODE',
         ];
 
         $select = array_merge($whereAny, [
-            'sccttran.METODE',
-            'sccttran.TRXDATE',
-            'sccttran.NOREFF',
-            'sccttran.FIDBANK',
-            'sccttran.KDCHANNEL',
-            'sccttran.DEBET',
-            'sccttran.KREDIT',
-            'sccttran.REFFBANK',
-            'sccttran.TRANSNO',
+            'sccttran_cashless.METODE',
+            'sccttran_cashless.TRXDATE',
+            'sccttran_cashless.NOREFF',
+            'sccttran_cashless.FIDBANK',
+            'sccttran_cashless.KDCHANNEL',
+            'sccttran_cashless.DEBET',
+            'sccttran_cashless.KREDIT',
+            'sccttran_cashless.REFFBANK',
+            'sccttran_cashless.TRANSNO',
         ]);
 
         $query = $this->excludeManualCashScope(
-            sccttran::query()->leftJoin('scctcust', 'scctcust.CUSTID', '=', 'sccttran.CUSTID'),
-            'sccttran.FIDBANK'
+            SccttranCashless::query()->leftJoin('scctcust', 'scctcust.CUSTID', '=', 'sccttran_cashless.CUSTID'),
+            'sccttran_cashless.FIDBANK'
         );
 
         if (!empty($filters)) {
@@ -568,7 +568,7 @@ class SaldoVirtualAccountController extends Controller
             });
         }
 
-        $totalRecords = $this->excludeManualCashScope(sccttran::query())
+        $totalRecords = $this->excludeManualCashScope(SccttranCashless::query())
             ->when($custid, fn ($q) => $q->where('CUSTID', $custid))
             ->count();
 
@@ -594,7 +594,7 @@ class SaldoVirtualAccountController extends Controller
             $totalKredit = Cache::remember(
                 "total_kredit_va_custid_" . $custid,
                 600,
-                fn () => (int) $this->excludeManualCashScope(sccttran::query())
+                fn () => (int) $this->excludeManualCashScope(SccttranCashless::query())
                     ->where('CUSTID', $custid)
                     ->sum('KREDIT')
             );
@@ -602,7 +602,7 @@ class SaldoVirtualAccountController extends Controller
             $totalDebet = Cache::remember(
                 "total_debet_va_custid_" . $custid,
                 600,
-                fn () => (int) $this->excludeManualCashScope(sccttran::query())
+                fn () => (int) $this->excludeManualCashScope(SccttranCashless::query())
                     ->where('CUSTID', $custid)
                     ->sum('DEBET')
             );
@@ -631,7 +631,7 @@ class SaldoVirtualAccountController extends Controller
             return 0;
         }
 
-        return (int) sccttran::query()
+        return (int) SccttranCashless::query()
             ->where('CUSTID', $custId)
             ->selectRaw('COALESCE(SUM(KREDIT), 0) - COALESCE(SUM(DEBET), 0) AS saldo')
             ->value('saldo');
@@ -685,7 +685,7 @@ class SaldoVirtualAccountController extends Controller
         $search_arr = $request->get('search', []);
         $searchValue = $search_arr['value'] ?? '';
 
-        $defaultColumn = 'sccttran.TRXDATE';
+        $defaultColumn = 'sccttran_cashless.TRXDATE';
         $defaultOrder = 'desc';
         $columnName = $defaultColumn;
         $columnSortOrder = $defaultOrder;
@@ -699,7 +699,7 @@ class SaldoVirtualAccountController extends Controller
                 $columnName = match ($requestedData) {
                     'NOCUST', 'NMCUST', 'CODE02', 'DESC02', 'DESC03' => 'scctcust.' . $requestedData,
                     'NOVA' => 'scctcust.NOCUST',
-                    default => 'sccttran.' . $requestedData,
+                    default => 'sccttran_cashless.' . $requestedData,
                 };
             }
         }
@@ -714,7 +714,7 @@ class SaldoVirtualAccountController extends Controller
                 $date = Carbon::createFromFormat('d-m-Y', $val);
                 if ($date) {
                     $filters[] = [
-                        'sccttran.TRXDATE',
+                        'sccttran_cashless.TRXDATE',
                         $key === 'dari_tanggal' ? '>=' : '<=',
                         $key === 'dari_tanggal' ? $date->copy()->startOfDay() : $date->copy()->endOfDay(),
                     ];
@@ -731,12 +731,12 @@ class SaldoVirtualAccountController extends Controller
             'scctcust.NOCUST',
             'scctcust.NMCUST',
             'scctcust.NUM2ND',
-            'sccttran.NOREFF',
-            'sccttran.METODE',
+            'sccttran_cashless.NOREFF',
+            'sccttran_cashless.METODE',
         ];
 
-        $query = sccttran::query()
-            ->leftJoin('scctcust', 'scctcust.CUSTID', '=', 'sccttran.CUSTID');
+        $query = SccttranCashless::query()
+            ->leftJoin('scctcust', 'scctcust.CUSTID', '=', 'sccttran_cashless.CUSTID');
 
         foreach ($filters as $filter) {
             if (count($filter) === 3 && ($filter[1] ?? null) === 'in' && is_array($filter[2] ?? null)) {
@@ -755,7 +755,7 @@ class SaldoVirtualAccountController extends Controller
             });
         }
 
-        $totalRecords = sccttran::query()->count();
+        $totalRecords = SccttranCashless::query()->count();
         $totalRecordswithFilter = (clone $query)->count();
 
         $records = (clone $query)
@@ -767,11 +767,11 @@ class SaldoVirtualAccountController extends Controller
                 'scctcust.CODE02',
                 'scctcust.DESC02',
                 'scctcust.DESC03',
-                'sccttran.TRXDATE',
-                'sccttran.METODE',
-                'sccttran.DEBET',
-                'sccttran.KREDIT',
-                'sccttran.NOREFF',
+                'sccttran_cashless.TRXDATE',
+                'sccttran_cashless.METODE',
+                'sccttran_cashless.DEBET',
+                'sccttran_cashless.KREDIT',
+                'sccttran_cashless.NOREFF',
             ])
             ->skip($start)
             ->take($rowperpage > 0 ? $rowperpage : 25)

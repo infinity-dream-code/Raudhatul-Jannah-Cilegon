@@ -159,7 +159,7 @@ class SaldoVirtualAccountDetailExport implements FromArray, WithEvents, WithTitl
     private function buildRows(Collection $transactions): void
     {
         $this->rows = [
-            ['Detail Saldo Virtual Account'],
+            ['Detail Saldo Usaku'],
             ['', '', '', '', '', '', ''],
         ];
 
@@ -170,7 +170,7 @@ class SaldoVirtualAccountDetailExport implements FromArray, WithEvents, WithTitl
         $this->rows[] = ['Unit', (string) ($this->siswa['unit'] ?? '-')];
         $this->rows[] = ['Kelas', (string) ($this->siswa['kelas'] ?? '-')];
         $this->rows[] = ['Kelompok', (string) ($this->siswa['kelompok'] ?? '-')];
-        $this->rows[] = ['No Virtual Account', (string) ($this->siswa['nova'] ?? '-')];
+        $this->rows[] = ['No VA / Usaku', (string) ($this->siswa['nova'] ?? '-')];
         $this->rows[] = ['Total Saldo', $this->formatRupiah($this->saldo)];
 
         $this->infoEndRow = count($this->rows);
