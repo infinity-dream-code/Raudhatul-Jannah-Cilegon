@@ -62,58 +62,47 @@
 @section('errorInputHelper', true)
 @section('script')
     <script type="text/javascript" defer>
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         document.addEventListener("DOMContentLoaded", function () {
             function formatRupiah(amount) {
-                if (!amount) return 'Rp 0';
-                return 'Rp. ' + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                if (amount === null || amount === undefined || amount === '') return 'Rp 0';
+                const num = Math.round(Number(amount));
+                return 'Rp. ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
             }
 
-            // document.getElementById('pin').addEventListener('keypress', function (e) {
-            //     if (e.key === 'Enter') {
-            //         document.getElementById('form-data').requestSubmit();
-            //     }
-            // })
-
             let currentIDStatus = false;
-            // document.getElementById('tap_id').focus({focusVisible: true});
             const tapIdInput = document.getElementById('tap_id');
-            tapIdInput.focus()
+            tapIdInput.focus();
             document.getElementById('form-data').addEventListener('submit', async function (e) {
                 e.preventDefault();
                 clearErrorMessages('form-data');
                 const form = e.target;
                 let request = false;
                 const formData = new FormData(this);
-                let tap_id = formData.get('tap_id');
+                let tap_id = (formData.get('tap_id') || '').toString().trim();
                 let belanja = formData.get('belanja');
-                // let pin = formData.get('pin');
 
                 if (!tap_id && !belanja) {
                     warningAlert('Silahkan tap kartu terlebih dahulu', 'tap_id');
                 } else if (tap_id && !belanja) {
                     loadingAlert("Memproses Kartu...");
-                    request = new Request('{{route('cashless.admin.tap-belanja.get-saldo')}}', {
+                    request = cashlessRequest('{{ route('cashless.admin.tap-belanja.get-saldo', [], false) }}', {
                         method: "POST",
-                        headers: {'X-CSRF-TOKEN': csrfToken},
                         body: formData
                     });
                 } else if (tap_id && belanja) {
                     loadingAlert("Memproses Belanja...");
-                    request = new Request('{{route('cashless.admin.tap-belanja.payment')}}', {
+                    request = cashlessRequest('{{ route('cashless.admin.tap-belanja.payment', [], false) }}', {
                         method: "POST",
-                        headers: {'X-CSRF-TOKEN': csrfToken},
                         body: formData
                     });
                 }
 
                 if (request) {
-                    let processForm = await submitForm(request);
+                    let processForm = await cashlessSubmit(request);
                     if (processForm.success === true) {
                         const result = processForm.data.data;
                         if (tap_id && !belanja) {
-                            // const [id, saldo, name] = result.split(' | ').map(v => v.trim());
-                            if (result.length !== 3) {
+                            if (!result || result.length !== 3) {
                                 warningAlert('Data tidak ditemukan, silahkan tap kartu yang valid', 'tap_id');
                                 document.getElementById('saldo').value = 0;
                                 document.getElementById('nama').value = '';
@@ -256,46 +245,6 @@
                 }
             });
         });
-
-        async function submitForm(request) {
-            try {
-                return await fetch(request)
-                    .then(async response => {
-                        const data = await response.json().catch(() => ({}));
-                        if (!response.ok) {
-                            throw {
-                                status: response.status,
-                                message: data.message || response.statusText,
-                                errors: data.errors || data.error
-                            };
-                        }
-                        return data;
-                    })
-                    .then(data => {
-                        return {success: true, data: data};
-                    });
-            } catch (error) {
-                if (error.status === 422) {
-                    const errors = error.errors || error.error;
-                    errorAlert(error.message);
-                    return {
-                        success: 422,
-                        errors: errors,
-                    };
-                } else {
-                    const errorMessages = {
-                        401: 'Sesi anda sudah habis 🙏 <br>Silahkan muat ulang halaman untuk melanjutkan! <br> jika masalah masih terjadi silahkan login kembali!',
-                        403: 'Anda tidak memiliki izin untuk mengakses halaman ini 😖',
-                        404: 'Halaman yang dituju tidak ditemukan 🧐',
-                        405: 'Metode tidak valid 🧐 <br>silahkan muat ulang halaman dan coba lagi!',
-                        419: 'Sesi anda sudah habis 🙏 <br>Silahkan muat ulang halaman untuk melanjutkan! <br> jika masalah masih terjadi silahkan login kembali!',
-                        429: 'Terlalu banyak permintaan akses <br>silahkan tunggu beberapa saat 🙏',
-                    };
-                    errorAlert(errorMessages[error.status] || "Terjadi kesalahan saat memproses permintaan<br> Silahkan coba memuat ulang halaman");
-                    return {success: false};
-                }
-            }
-        }
     </script>
 @endsection
 

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers\Cashless;
 
@@ -75,6 +75,7 @@ class CashlessAuthController extends Controller
                 'role' => $user->role ?? null,
             ],
         ]);
+        $request->session()->regenerate();
 
         if ($request->filled('remember')) {
             $token = Str::random(60);

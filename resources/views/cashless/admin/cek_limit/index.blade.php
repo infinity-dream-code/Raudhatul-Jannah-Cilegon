@@ -64,100 +64,56 @@
 @section('errorInputHelper', true)
 @section('script')
     <script type="text/javascript" defer>
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         document.addEventListener("DOMContentLoaded", function () {
             function formatRupiah(amount) {
-                if (!amount) return 'Rp 0';
-                return 'Rp. ' + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                if (amount === null || amount === undefined || amount === '') return 'Rp 0';
+                const num = Math.round(Number(amount));
+                return 'Rp. ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
             }
 
-            // document.getElementById('pin').addEventListener('keypress', function (e) {
-            //     if (e.key === 'Enter') {
-            //         document.getElementById('form-data').requestSubmit();
-            //     }
-            // })
-
-            let currentIDStatus = false;
-            // document.getElementById('tap_id').focus({focusVisible: true});
             const tapIdInput = document.getElementById('tap_id');
-            tapIdInput.focus()
+            tapIdInput.focus();
+
             document.getElementById('form-data').addEventListener('submit', async function (e) {
                 e.preventDefault();
                 clearErrorMessages('form-data');
-                const form = e.target;
-                let request = false;
                 const formData = new FormData(this);
-                let tap_id = formData.get('tap_id');
-                // let pin = formData.get('pin');
+                const tap_id = (formData.get('tap_id') || '').toString().trim();
 
                 if (!tap_id) {
                     warningAlert('Silahkan tap kartu terlebih dahulu', 'tap_id');
                     return;
                 }
 
-                request = new Request('{{route('cashless.admin.cek-limit.get-limit')}}', {
-                    method: "POST",
-                    headers: {'X-CSRF-TOKEN': csrfToken},
-                    body: formData
+                const request = cashlessRequest('{{ route('cashless.admin.cek-limit.get-limit', [], false) }}', {
+                    method: 'POST',
+                    body: formData,
                 });
 
-                if (request) {
-                    let processForm = await submitForm(request);
-                    if (processForm.success === true) {
-                        const hasil = processForm.data;
-                        if(hasil.data === 'error' || hasil.data === '' || !hasil.data){
-                            warningAlert('Kartu diblokir atau tidak ditemukan', 'tap_id');
-                        }else{
-                            document.getElementById('limit').value = formatRupiah(hasil.data ?? 0);
-                            document.getElementById('nis').value = hasil.nis;
-                            document.getElementById('nama').value = hasil.nama;
-                        }
+                const processForm = await cashlessSubmit(request);
+                if (processForm.success === true) {
+                    const hasil = processForm.data;
+                    if (hasil.data === 'error' || hasil.data === '' || hasil.data === null || hasil.data === undefined) {
+                        warningAlert('Kartu diblokir atau tidak ditemukan', 'tap_id');
+                        document.getElementById('limit').value = '';
+                        document.getElementById('nis').value = '';
+                        document.getElementById('nama').value = '';
                     } else {
-                        processErrors(processForm.errors, 'tap_id');
+                        document.getElementById('limit').value = formatRupiah(hasil.data ?? 0);
+                        document.getElementById('nis').value = hasil.nis || '';
+                        document.getElementById('nama').value = hasil.nama || '';
                     }
+                } else {
+                    document.getElementById('limit').value = '';
+                    document.getElementById('nis').value = '';
+                    document.getElementById('nama').value = '';
+                    processErrors(processForm.errors, 'tap_id');
                 }
+
+                tapIdInput.value = '';
+                tapIdInput.focus();
             });
         });
-
-        async function submitForm(request) {
-            try {
-                return await fetch(request)
-                    .then(async response => {
-                        const data = await response.json().catch(() => ({}));
-                        if (!response.ok) {
-                            throw {
-                                status: response.status,
-                                message: data.message || response.statusText,
-                                errors: data.errors || data.error
-                            };
-                        }
-                        return data;
-                    })
-                    .then(data => {
-                        return {success: true, data: data};
-                    });
-            } catch (error) {
-                if (error.status === 422) {
-                    const errors = error.errors || error.error;
-                    errorAlert(error.message);
-                    return {
-                        success: 422,
-                        errors: errors,
-                    };
-                } else {
-                    const errorMessages = {
-                        401: 'Sesi anda sudah habis 🙏 <br>Silahkan muat ulang halaman untuk melanjutkan! <br> jika masalah masih terjadi silahkan login kembali!',
-                        403: 'Anda tidak memiliki izin untuk mengakses halaman ini 😖',
-                        404: 'Halaman yang dituju tidak ditemukan 🧐',
-                        405: 'Metode tidak valid 🧐 <br>silahkan muat ulang halaman dan coba lagi!',
-                        419: 'Sesi anda sudah habis 🙏 <br>Silahkan muat ulang halaman untuk melanjutkan! <br> jika masalah masih terjadi silahkan login kembali!',
-                        429: 'Terlalu banyak permintaan akses <br>silahkan tunggu beberapa saat 🙏',
-                    };
-                    errorAlert(errorMessages[error.status] || "Terjadi kesalahan saat memproses permintaan<br> Silahkan coba memuat ulang halaman");
-                    return {success: false};
-                }
-            }
-        }
     </script>
 @endsection
 

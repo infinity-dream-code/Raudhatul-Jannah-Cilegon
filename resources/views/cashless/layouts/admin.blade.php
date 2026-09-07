@@ -289,6 +289,7 @@
         integrity="sha256-WjwoxFTbs4JzyDmrHgK4VgR+Dz7he8HYwCbocAlNn9k=" crossorigin="anonymous"></script>
 <script src="{{asset('js/main.js')}}"></script>
 <script src="{{asset('js/alerts.min.js')}}"></script>
+<script src="{{asset('js/cashless-fetch.js')}}"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css"/>
 
 <style>

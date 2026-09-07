@@ -99,7 +99,6 @@
 @section('errorInputHelper', true)
 @section('script')
     <script type="text/javascript" defer>
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         document.addEventListener("DOMContentLoaded", function () {
             const tapIdInput = document.getElementById('tap_id');
             const form = document.getElementById('form-data');
@@ -218,13 +217,12 @@
                 const formData = new FormData();
                 formData.append('tap_id', tap_id);
 
-                const request = new Request('{{route('cashless.admin.cek-saldo.get-data')}}', {
-                    method: "POST",
-                    headers: {'X-CSRF-TOKEN': csrfToken},
-                    body: formData
+                const request = cashlessRequest('{{ route('cashless.admin.cek-saldo.get-data', [], false) }}', {
+                    method: 'POST',
+                    body: formData,
                 });
 
-                let processForm = await submitForm(request);
+                let processForm = await cashlessSubmit(request);
                 if (processForm.success === true) {
                     const hasil = processForm.data;
                     document.getElementById('nis').value = hasil.nis ?? '';
@@ -244,46 +242,6 @@
                 readyForNextTap();
             });
         });
-
-        async function submitForm(request) {
-            try {
-                return await fetch(request)
-                    .then(async response => {
-                        const data = await response.json().catch(() => ({}));
-                        if (!response.ok) {
-                            throw {
-                                status: response.status,
-                                message: data.message || response.statusText,
-                                errors: data.errors || data.error
-                            };
-                        }
-                        return data;
-                    })
-                    .then(data => {
-                        return {success: true, data: data};
-                    });
-            } catch (error) {
-                if (error.status === 422) {
-                    const errors = error.errors || error.error;
-                    errorAlert(error.message);
-                    return {
-                        success: 422,
-                        errors: errors,
-                    };
-                } else {
-                    const errorMessages = {
-                        401: 'Sesi anda sudah habis 🙏 <br>Silahkan muat ulang halaman untuk melanjutkan! <br> jika masalah masih terjadi silahkan login kembali!',
-                        403: 'Anda tidak memiliki izin untuk mengakses halaman ini 😖',
-                        404: 'Halaman yang dituju tidak ditemukan 🧐',
-                        405: 'Metode tidak valid 🧐 <br>silahkan muat ulang halaman dan coba lagi!',
-                        419: 'Sesi anda sudah habis 🙏 <br>Silahkan muat ulang halaman untuk melanjutkan! <br> jika masalah masih terjadi silahkan login kembali!',
-                        429: 'Terlalu banyak permintaan akses <br>silahkan tunggu beberapa saat 🙏',
-                    };
-                    errorAlert(errorMessages[error.status] || "Terjadi kesalahan saat memproses permintaan<br> Silahkan coba memuat ulang halaman");
-                    return {success: false};
-                }
-            }
-        }
     </script>
 @endsection
 
