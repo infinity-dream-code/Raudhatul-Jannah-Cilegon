@@ -19,6 +19,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/portal/facepay-admin', [\App\Http\Controllers\PortalController::class, 'facepayAdmin'])->name('portal.facepay-admin');
     Route::get('/portal/facepay-siswa', [\App\Http\Controllers\PortalController::class, 'facepaySiswa'])->name('portal.facepay-siswa');
     Route::get('/portal/facepay-kantin', [\App\Http\Controllers\PortalController::class, 'facepayKantin'])->name('portal.facepay-kantin');
+    Route::get('/portal/cashless', [\App\Http\Controllers\PortalController::class, 'cashless'])->name('portal.cashless');
     Route::get('/portal/switch', [\App\Http\Controllers\PortalController::class, 'switchModule'])->name('portal.switch');
 });
 
@@ -249,3 +250,82 @@ Route::prefix("admin")
                 });
         });
     });
+
+/*
+|--------------------------------------------------------------------------
+| Cashless (sm_kantin) — same app, separate login session
+|--------------------------------------------------------------------------
+*/
+Route::prefix('cashless')->name('cashless.')->group(function () {
+    Route::get('/login', [\App\Http\Controllers\Cashless\CashlessAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [\App\Http\Controllers\Cashless\CashlessAuthController::class, 'login'])->name('login.post');
+    Route::post('/logout', [\App\Http\Controllers\Cashless\CashlessAuthController::class, 'logout'])->name('logout');
+
+    Route::prefix('admin')
+        ->name('admin.')
+        ->middleware(['cashless.session'])
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Cashless\AdminController::class, 'index'])->name('index');
+
+            Route::prefix('rekap-penerimaan-harian')->name('rekap-penerimaan-harian.')
+                ->controller(\App\Http\Controllers\Cashless\RekapPenerimaanHarianController::class)
+                ->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('get-data', 'getData')->name('get-data');
+                    Route::get('get-column', 'getColumn')->name('get-column');
+                });
+
+            Route::prefix('data-transaksi-belanja')->name('data-transaksi-belanja.')
+                ->controller(\App\Http\Controllers\Cashless\DataTransaksiBelanjaController::class)
+                ->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('get-data', 'getData')->name('get-data');
+                    Route::get('get-column', 'getColumn')->name('get-column');
+                    Route::post('get-total', 'getTotal')->name('get-total');
+                    Route::post('export', 'export')->name('export');
+                });
+
+            Route::prefix('riwayat-pencairan')->name('riwayat-pencairan.')
+                ->controller(\App\Http\Controllers\Cashless\RiwayatPencairanController::class)
+                ->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('get-data', 'getData')->name('get-data');
+                    Route::get('get-column', 'getColumn')->name('get-column');
+                });
+
+            Route::prefix('tap-belanja')->name('tap-belanja.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Cashless\TapBelanjaController::class, 'index'])->name('index');
+                Route::post('/get-saldo', [\App\Http\Controllers\Cashless\TapBelanjaController::class, 'getSaldo'])->name('get-saldo');
+                Route::post('/payment', [\App\Http\Controllers\Cashless\TapBelanjaController::class, 'payment'])->name('payment');
+            });
+
+            Route::prefix('cek-limit')->name('cek-limit.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Cashless\CekLimitController::class, 'index'])->name('index');
+                Route::post('/get-limit', [\App\Http\Controllers\Cashless\CekLimitController::class, 'getLimit'])->name('get-limit');
+            });
+
+            Route::prefix('cek-saldo')->name('cek-saldo.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Cashless\CekSaldoController::class, 'index'])->name('index');
+                Route::post('/get-data', [\App\Http\Controllers\Cashless\CekSaldoController::class, 'getData'])->name('get-data');
+            });
+
+            Route::prefix('manajemen-admin')
+                ->name('manajemen-admin.')
+                ->controller(\App\Http\Controllers\Cashless\ManajemenAdminController::class)
+                ->group(function () {
+                    Route::get('get-data', 'getData')->name('get-data');
+                    Route::get('get-column', 'getColumn')->name('get-column');
+                    Route::put('update-password/{id}', 'changePassword')->name('update-password');
+                    Route::put('reset-password/{id}', 'resetPassword')->name('reset-password');
+                    Route::resource('', \App\Http\Controllers\Cashless\ManajemenAdminController::class)->parameters(['' => 'id']);
+                });
+
+            Route::prefix('profil-admin')
+                ->name('profil-admin.')
+                ->controller(\App\Http\Controllers\Cashless\ProfileAdminController::class)
+                ->group(function () {
+                    Route::put('update-password/{id}', 'changePassword')->name('update-password');
+                    Route::resource('', \App\Http\Controllers\Cashless\ProfileAdminController::class)->parameters(['' => 'id']);
+                });
+        });
+});

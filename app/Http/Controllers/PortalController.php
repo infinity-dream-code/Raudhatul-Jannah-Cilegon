@@ -60,6 +60,19 @@ class PortalController extends Controller
         return $this->redirectExternalModule('facepay_kantin');
     }
 
+    public function cashless(): RedirectResponse
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        if (session()->has('cashless_user')) {
+            return redirect()->route('cashless.admin.index');
+        }
+
+        return redirect()->route('cashless.login');
+    }
+
     public function switchModule(Request $request): RedirectResponse
     {
         if (!Auth::check()) {

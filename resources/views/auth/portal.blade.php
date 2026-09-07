@@ -307,6 +307,17 @@
                     <span class="go">Buka aplikasi &rarr;</span>
                 </a>
             @endif
+
+            @if(($modules['cashless']['enabled'] ?? false))
+                <a class="card" href="/portal/cashless" style="--accent:#10b981;">
+                    <div class="card-top">
+                        <div class="icon" style="background:#10b981;"><i class="fa-solid fa-credit-card"></i></div>
+                    </div>
+                    <h3>Cashless</h3>
+                    <p>Tap belanja, cek saldo/limit, dan data transaksi cashless.</p>
+                    <span class="go">Buka aplikasi &rarr;</span>
+                </a>
+            @endif
         </div>
     </main>
 

@@ -20,6 +20,8 @@ class SmKantin extends Model
         'KDMERCAN',
         'username',
         'password',
+        'remember_token',
+        'role',
     ];
 
     protected $hidden = [

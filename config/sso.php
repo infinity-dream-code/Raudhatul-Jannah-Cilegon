@@ -39,8 +39,8 @@ return [
             'use_signed_token' => (bool) env('SSO_MODULE_PRESENSI_USE_SIGNED_TOKEN', true),
         ],
         'cashless' => [
-            'enabled' => (bool) env('SSO_MODULE_CASHLESS_ENABLED', false),
-            'url' => env('SSO_MODULE_CASHLESS_URL', ''),
+            'enabled' => (bool) env('SSO_MODULE_CASHLESS_ENABLED', true),
+            'url' => env('SSO_MODULE_CASHLESS_URL', '/cashless/login'),
             'label' => 'Cashless',
             'use_signed_token' => (bool) env('SSO_MODULE_CASHLESS_USE_SIGNED_TOKEN', false),
         ],
