@@ -33,8 +33,8 @@ class ManajemenAdminController extends Controller
         $this->title = "Manajemen Admin";
         $this->mainTitle = "Manajemen Admin";
         $this->showTitle = "Detail Admin";
-        $this->datasUrl = route("cashless.admin.manajemen-admin.get-data");
-        $this->columnsUrl = route("cashless.admin.manajemen-admin.get-column");
+        $this->datasUrl = '/cashless/admin/manajemen-admin/get-data';
+        $this->columnsUrl = '/cashless/admin/manajemen-admin/get-column';
     }
 
     public function index()

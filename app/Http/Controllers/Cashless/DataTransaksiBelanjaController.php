@@ -37,12 +37,12 @@ class DataTransaksiBelanjaController extends Controller
 
     private function columnsUrl(): string
     {
-        return route('cashless.admin.data-transaksi-belanja.get-column');
+        return '/cashless/admin/data-transaksi-belanja/get-column';
     }
 
     private function datasUrl(): string
     {
-        return route('cashless.admin.data-transaksi-belanja.get-data');
+        return '/cashless/admin/data-transaksi-belanja/get-data';
     }
 
     public function index()
@@ -52,8 +52,8 @@ class DataTransaksiBelanjaController extends Controller
         $data['title'] = $this->title;
         $data['columnsUrl'] = $this->columnsUrl();
         $data['datasUrl'] = $this->datasUrl();
-        $data['exportUrl'] = route('cashless.admin.data-transaksi-belanja.export');
-        $data['totalUrl'] = route('cashless.admin.data-transaksi-belanja.get-total');
+        $data['exportUrl'] = '/cashless/admin/data-transaksi-belanja/export';
+        $data['totalUrl'] = '/cashless/admin/data-transaksi-belanja/get-total';
 
         try {
             $data['thn_aka'] = DB::connection('DATA_MYSQL')->table('mst_thn_aka')->select(['thn_aka'])->where('thn_aka', '!=', null)->get();

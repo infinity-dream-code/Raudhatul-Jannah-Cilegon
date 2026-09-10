@@ -9,195 +9,204 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class RiwayatPencairanController extends Controller
 {
-    private string $title = "Data Riwayat Pencairan";
+    private string $title = 'Data Riwayat Pencairan';
     private string $mainTitle = 'Data Riwayat Pencairan';
     private string $cacheKey = 'Data Riwayat Pencairan';
+
     private array $allowedFilters = [
         'dari_tanggal' => 'sm_mercan_cair.dari_tgl_tran',
         'sampai_tanggal' => 'sm_mercan_cair.akhir_tgl_tran',
         'tanggal' => 'sm_mercan_cair.TglTerima',
     ];
 
+    private array $orderableColumns = [
+        'Nominal' => 'sm_mercan_cair.Nominal',
+        'TglTerima' => 'sm_mercan_cair.TglTerima',
+        'dari_tgl_tran' => 'sm_mercan_cair.dari_tgl_tran',
+        'akhir_tgl_tran' => 'sm_mercan_cair.akhir_tgl_tran',
+        'sm_mercan_cair.Nominal' => 'sm_mercan_cair.Nominal',
+        'sm_mercan_cair.TglTerima' => 'sm_mercan_cair.TglTerima',
+        'sm_mercan_cair.dari_tgl_tran' => 'sm_mercan_cair.dari_tgl_tran',
+        'sm_mercan_cair.akhir_tgl_tran' => 'sm_mercan_cair.akhir_tgl_tran',
+    ];
+
     public function __construct()
     {
-        $key = Str::slug($this->cacheKey) . '_cache_version';
-
-        Cache::add($key, 1);
+        Cache::add(Str::slug($this->cacheKey) . '_cache_version', 1);
     }
 
     public function index()
     {
-        $data['title'] = $this->title;
-        $data['columnsUrl'] = $this->columnsUrl();
-        $data['datasUrl'] = $this->dataUrl();
-
-        return view('cashless.admin.riwayat_pencairan.index', $data);
-    }
-
-    private function columnsUrl(): string
-    {
-        return route('cashless.admin.riwayat-pencairan.get-column');
-    }
-
-    private function dataUrl(): string
-    {
-        return route('cashless.admin.riwayat-pencairan.get-data');
+        return view('cashless.admin.riwayat_pencairan.index', [
+            'title' => $this->title,
+            'mainTitle' => $this->mainTitle,
+            'columnsUrl' => '/cashless/admin/riwayat-pencairan/get-column',
+            'datasUrl' => '/cashless/admin/riwayat-pencairan/get-data',
+        ]);
     }
 
     public function getColumn()
     {
         return [
             ['data' => null, 'name' => 'no', 'columnType' => 'row', 'exportable' => true],
-            ['data' => 'Nominal', 'name' => 'Nominal', 'searchable' => true, 'orderable' => true, 'exportable' => true],
-            ['data' => 'TglTerima', 'name' => 'Tanggal', 'searchable' => true, 'orderable' => true, 'exportable' => true, "columnType" => "timestamp"],
-            ['data' => 'dari_tgl_tran', 'name' => 'Tanggal', 'searchable' => true, 'orderable' => true, 'exportable' => true, "columnType" => "date"],
-            ['data' => 'akhir_tgl_tran', 'name' => 'Tanggal', 'searchable' => true, 'orderable' => true, 'exportable' => true, "columnType" => "date"]
+            ['data' => 'Nominal', 'name' => 'Nominal', 'searchable' => true, 'orderable' => true, 'exportable' => true, 'columnType' => 'currency'],
+            ['data' => 'TglTerima', 'name' => 'Tgl Pencairan', 'searchable' => true, 'orderable' => true, 'exportable' => true, 'columnType' => 'timestamp'],
+            ['data' => 'dari_tgl_tran', 'name' => 'Dari', 'searchable' => true, 'orderable' => true, 'exportable' => true, 'columnType' => 'date'],
+            ['data' => 'akhir_tgl_tran', 'name' => 'Sampai', 'searchable' => true, 'orderable' => true, 'exportable' => true, 'columnType' => 'date'],
         ];
     }
 
     public function getData(Request $request)
     {
-        $draw = $request->get('draw');
-        $start = $request->get("start");
-        $rowperpage = $request->get("length");
-        $columnIndex_arr = $request->get('order', []);
-        $columnName_arr = $request->get('columns', []);
-        $order_arr = $request->get('order', []);
-        $search_arr = $request->get('search', []);
-        $searchValue = $search_arr['value'] ?? '';
-
-        $columnName = "sm_mercan_cair.akhir_tgl_tran";
-        $columnSortOrder = "desc";
-
-        if (!empty($order_arr)) {
-            $columnIndex = $columnIndex_arr[0]["column"] ?? null;
-            if (
-                $columnIndex !== null &&
-                !empty($columnName_arr[$columnIndex]["data"]) &&
-                $columnName_arr[$columnIndex]["data"] !== "no" &&
-                $columnName_arr[$columnIndex]["data"] !== "AA"
-            ) {
-                $columnName = $columnName_arr[$columnIndex]["data"];
-                $columnSortOrder = $order_arr[0]["dir"] ?? "desc";
+        try {
+            $draw = (int) $request->get('draw', 1);
+            $start = max(0, (int) $request->get('start', 0));
+            $rowperpage = (int) $request->get('length', 10);
+            if ($rowperpage <= 0) {
+                $rowperpage = 10;
             }
-        }
 
-        $filters = [];
-        $filterQuery = null;
+            $columnNameArr = $request->get('columns', []);
+            $orderArr = $request->get('order', []);
+            $searchValue = (string) ($request->get('search', [])['value'] ?? '');
 
-        $filter = FilterHandler::resolveFilters($request->input('filter'), $this->allowedFilters);
+            $columnName = 'sm_mercan_cair.TglTerima';
+            $columnSortOrder = 'desc';
 
-        if ($filter) {
+            if (!empty($orderArr)) {
+                $columnIndex = $orderArr[0]['column'] ?? null;
+                $requested = $columnNameArr[$columnIndex]['data'] ?? null;
+                if ($requested && isset($this->orderableColumns[$requested])) {
+                    $columnName = $this->orderableColumns[$requested];
+                    $columnSortOrder = strtolower((string) ($orderArr[0]['dir'] ?? 'desc')) === 'asc' ? 'asc' : 'desc';
+                }
+            }
+
+            $kantin = trim((string) session('cashless_user.kantin', ''));
+            $filterInput = $request->input('filter', []);
+            $filter = FilterHandler::resolveFilters(is_array($filterInput) ? $filterInput : [], $this->allowedFilters);
+
+            $query = DB::connection('DATA_MYSQL')->table('sm_mercan_cair');
+
+            if ($kantin !== '') {
+                $query->where('sm_mercan_cair.NamaPenerima', 'like', '%' . $kantin . '%');
+            } else {
+                // Tanpa nama kantin di session, jangan kembalikan semua data
+                $query->whereRaw('1 = 0');
+            }
+
             foreach ($filter as $key => $val) {
+                $date = $this->parseFilterDate($val);
+                if (!$date) {
+                    continue;
+                }
+
                 switch ($key) {
-                    case 'sm_mercan_cair.PAIDDT_start':
-                        $date = Carbon::createFromFormat('d-m-Y', $val);
-                        if ($date) {
-                            $filters[] = ['sm_mercan_cair.dari_tgl_tran', '>=', $date];
-                        }
+                    case 'sm_mercan_cair.dari_tgl_tran':
+                        $query->whereDate('sm_mercan_cair.dari_tgl_tran', '>=', $date->toDateString());
                         break;
-                    case 'sm_mercan_cair.PAIDDT_end':
-                        $date = Carbon::createFromFormat('d-m-Y', $val);
-                        if ($date) {
-                            $filters[] = ['sm_mercan_cair.akhir_tgl_tran', '<=', $date];
-                        }
+                    case 'sm_mercan_cair.akhir_tgl_tran':
+                        $query->whereDate('sm_mercan_cair.akhir_tgl_tran', '<=', $date->toDateString());
                         break;
                     case 'sm_mercan_cair.TglTerima':
-                        $date = Carbon::createFromFormat('d-m-Y', $val);
-                        if ($date) {
-                            $filters[] = ['sm_mercan_cair.TglTerima', '=', $date];
-                        }
-                        break;
-                    default:
-                        ($key) && $filters[] = [$key, '=', $val];
+                        $query->whereDate('sm_mercan_cair.TglTerima', '=', $date->toDateString());
                         break;
                 }
-            };
+            }
 
-            if (!empty($filters)) {
-                $filterQuery = function ($query) use ($filters) {
-                    foreach ($filters as $filter) {
-                        if (count($filter) === 3) {
-                            $query->where($filter[0], $filter[1], $filter[2]);
-                        } elseif (count($filter) === 4) {
-                            if ($filter[3] == 'whereBetween') {
-                                $query->whereBetween($filter[0], [$filter[1], $filter[2]]);
-                            } else {
-                                $query->{$filter[3]}($filter[0], $filter[1], $filter[2]);
-                            }
-                        }
-                    }
-                };
+            if ($searchValue !== '') {
+                $sanitizeSearch = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $searchValue);
+                $query->where(function ($q) use ($sanitizeSearch) {
+                    $q->orWhere('sm_mercan_cair.Nominal', 'like', '%' . $sanitizeSearch . '%')
+                        ->orWhere('sm_mercan_cair.NamaPenerima', 'like', '%' . $sanitizeSearch . '%');
+                });
+            }
+
+            $totalRecords = $this->total($kantin);
+
+            $totalFiltered = (clone $query)->count();
+
+            $records = (clone $query)
+                ->orderBy($columnName, $columnSortOrder)
+                ->select([
+                    'sm_mercan_cair.Nominal',
+                    'sm_mercan_cair.TglTerima',
+                    'sm_mercan_cair.dari_tgl_tran',
+                    'sm_mercan_cair.akhir_tgl_tran',
+                ])
+                ->skip($start)
+                ->take($rowperpage)
+                ->get()
+                ->toArray();
+
+            return response()->json([
+                'draw' => $draw,
+                'recordsTotal' => $totalRecords,
+                'recordsFiltered' => $totalFiltered,
+                'data' => $records,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('RiwayatPencairan getData error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'draw' => (int) $request->get('draw', 0),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'Gagal memuat data riwayat pencairan',
+                'message' => 'Gagal memuat data riwayat pencairan',
+            ], 200);
+        }
+    }
+
+    private function parseFilterDate(mixed $val): ?Carbon
+    {
+        $val = trim((string) $val);
+        if ($val === '') {
+            return null;
+        }
+
+        foreach (['d-m-Y', 'Y-m-d', 'd/m/Y'] as $format) {
+            try {
+                return Carbon::createFromFormat($format, $val)->startOfDay();
+            } catch (\Throwable $e) {
+                // try next
             }
         }
 
-        $whereAny = [];
-
-        $select = array_unique([...$whereAny,
-            'sm_mercan_cair.Nominal',
-            'sm_mercan_cair.TglTerima',
-            'sm_mercan_cair.dari_tgl_tran',
-            'sm_mercan_cair.akhir_tgl_tran',
-        ]);
-
-        $query = DB::connection('DATA_MYSQL')->table('sm_mercan_cair')
-            ->where('sm_mercan_cair.NamaPenerima', 'like', "%" . session('cashless_user.kantin') . "%")
-            ->where(function ($query) use ($filterQuery) {
-                if ($filterQuery) {
-                    $filterQuery($query);
-                }
-            })
-            ->when(!blank($searchValue), function ($query) use ($whereAny, $searchValue) {
-                $query->where(function ($q) use ($whereAny, $searchValue) {
-                    $sanitizeSearch = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $searchValue);
-                    foreach ($whereAny as $column) {
-                        $q->orWhere($column, 'like', '%' . $sanitizeSearch . '%');
-                    }
-                });
-            });
-
-        $totalRecords = $this->total();
-
-        $totalRecordswithFilter =
-            Cache::remember(
-                CacheHandler::cacheKey($this->cacheKey, 'total_filtered_data', $filter, $searchValue ?? ''),
-                now()->addMinutes(10),
-                fn() => (clone $query)->count()
-            );
-
-        $records = (clone $query)
-            ->orderBy($columnName, $columnSortOrder)
-            ->select($select)
-            ->skip($start)
-            ->take($rowperpage)
-            ->get()
-            ->toArray();
-
-        $response = array(
-            "draw" => intval($draw),
-            "recordsTotal" => $totalRecords ?? 0,
-            "recordsFiltered" => $totalRecordswithFilter ?? 0,
-            "data" => $records ?? [],
-        );
-        return response()->json($response);
+        try {
+            return Carbon::parse($val)->startOfDay();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
-    public function total(): int
+    public function total(string $kantin = ''): int
     {
-        $key = Str::slug($this->cacheKey);
-        return Cache::remember(
-            "{$key}:total_all_data",
-            now()->addMinutes(10),
-            fn() => DB::connection('DATA_MYSQL')->table('sm_mercan_cair')
-                ->where('sm_mercan_cair.NamaPenerima', 'like', "%" . session('cashless_user.kantin') . "%")
-                ->count()
-        );
+        if ($kantin === '') {
+            $kantin = trim((string) session('cashless_user.kantin', ''));
+        }
+
+        $key = Str::slug($this->cacheKey) . ':total:' . md5($kantin);
+
+        return (int) Cache::remember($key, now()->addMinutes(5), function () use ($kantin) {
+            $q = DB::connection('DATA_MYSQL')->table('sm_mercan_cair');
+            if ($kantin !== '') {
+                $q->where('sm_mercan_cair.NamaPenerima', 'like', '%' . $kantin . '%');
+            } else {
+                return 0;
+            }
+
+            return $q->count();
+        });
     }
-
-
 }
-

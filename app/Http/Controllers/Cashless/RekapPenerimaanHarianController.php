@@ -42,12 +42,12 @@ class RekapPenerimaanHarianController extends Controller
 
     private function columnsUrl(): string
     {
-        return route('cashless.admin.rekap-penerimaan-harian.get-column');
+        return '/cashless/admin/rekap-penerimaan-harian/get-column';
     }
 
     private function datasUrl(): string
     {
-        return route('cashless.admin.rekap-penerimaan-harian.get-data');
+        return '/cashless/admin/rekap-penerimaan-harian/get-data';
     }
 
     public function getColumn()
