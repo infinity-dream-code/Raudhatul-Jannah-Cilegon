@@ -85,7 +85,7 @@
                     return;
                 }
 
-                const request = cashlessRequest('{{ route('cashless.admin.cek-limit.get-limit', [], false) }}', {
+                const request = cashlessRequest('/cashless/admin/cek-limit/get-limit', {
                     method: 'POST',
                     body: formData,
                 });

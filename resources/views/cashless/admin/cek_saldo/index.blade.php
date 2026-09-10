@@ -217,14 +217,14 @@
                 const formData = new FormData();
                 formData.append('tap_id', tap_id);
 
-                const request = cashlessRequest('{{ route('cashless.admin.cek-saldo.get-data', [], false) }}', {
+                const request = cashlessRequest('/cashless/admin/cek-saldo/get-data', {
                     method: 'POST',
                     body: formData,
                 });
 
                 let processForm = await cashlessSubmit(request);
                 if (processForm.success === true) {
-                    const hasil = processForm.data;
+                    const hasil = processForm.data || {};
                     document.getElementById('nis').value = hasil.nis ?? '';
                     document.getElementById('nama').value = hasil.nama ?? '';
                     document.getElementById('saldo').value = formatRupiah(hasil.saldo ?? 0);
@@ -233,12 +233,13 @@
                     hasDisplayedData = true;
                 } else {
                     clearFormResult();
-                    processErrors(processForm.errors, 'tap_id');
+                    if (typeof processErrors === 'function') {
+                        processErrors(processForm.errors, 'tap_id');
+                    }
                 }
 
                 isProcessing = false;
                 if (typeof Swal !== 'undefined') Swal.close();
-                // Kosongkan TAP ID + fokus lagi → siap untuk anak berikutnya
                 readyForNextTap();
             });
         });

@@ -5,25 +5,24 @@ namespace App\Http\Controllers\Cashless;
 use App\Http\Controllers\Controller;
 use App\Models\ValidationMessage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class TapBelanjaController extends Controller
 {
     public string $title;
-    public $datasUrl;
-    public $columnsUrl;
 
     public function __construct()
     {
-        $this->title = "TAP KARTU";
+        $this->title = 'TAP KARTU';
     }
 
     public function index()
     {
-        $data["title"] = $this->title;
-        return view('cashless.admin.tap_belanja.index', $data);
+        return view('cashless.admin.tap_belanja.index', [
+            'title' => $this->title,
+        ]);
     }
 
     public function getSaldo(Request $request)
@@ -31,7 +30,7 @@ class TapBelanjaController extends Controller
         $validator = Validator::make(
             $request->all(),
             [
-                "tap_id" => ["required", "string"],
+                'tap_id' => ['required', 'string'],
             ],
             ValidationMessage::messages(),
             ValidationMessage::attributes(),
@@ -43,39 +42,90 @@ class TapBelanjaController extends Controller
                 $message = "{$message} Dan beberapa error lainnya";
             }
 
-            return response()->json(
-                [
-                    "message" => $message,
-                    "errors" => $validator->errors(),
-                ],
-                422,
-            );
-        }
-
-        try {
-            \Log::info('getSaldo - Request tap_id:', ['tap_id' => $request->tap_id]);
-            
-            $saldo = DB::connection('DATA_MYSQL')
-                ->select('SELECT GetSaldoCard_1VACashless(?) AS saldo', [$request->tap_id]);
-            
-            \Log::info('getSaldo - Raw result from DB:', ['result' => $saldo[0]->saldo ?? 'NULL']);
-            
-            $data = explode("|", $saldo[0]->saldo);
-            
-            \Log::info('getSaldo - Exploded data:', ['data' => $data, 'count' => count($data)]);
-            
-            return response()->json(["data" => $data]);
-        } catch (\Exception $e) {
-            \Log::error('getSaldo - Error:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             return response()->json([
-                "message" => "gagal mendapatkan data saldo, silahkan coba lagi",
-                "error" => $e->getMessage()
+                'message' => $message,
+                'errors' => $validator->errors(),
             ], 422);
         }
+
+        $tapId = trim((string) $request->input('tap_id'));
+
+        try {
+            $siswa = DB::connection('DATA_MYSQL')
+                ->table('scctcust')
+                ->join('sm_pin', 'sm_pin.CUSTID', '=', 'scctcust.CUSTID')
+                ->select(['scctcust.CUSTID', 'scctcust.nmcust', 'scctcust.nocust'])
+                ->where('sm_pin.PID', $tapId)
+                ->first();
+
+            if (!$siswa) {
+                return response()->json([
+                    'message' => 'Data tidak ditemukan, silahkan tap kartu yang valid',
+                    'errors' => ['tap_id' => ['Data tidak ditemukan, silahkan tap kartu yang valid']],
+                ], 422);
+            }
+
+            $nama = (string) ($siswa->nmcust ?? '');
+            $saldo = $this->resolveSaldo($tapId, (string) $siswa->CUSTID, $nama);
+
+            // Format yang diharapkan frontend: [tap_id, saldo, nama]
+            return response()->json([
+                'data' => [$tapId, (string) $saldo, $nama],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('getSaldo - Error:', [
+                'message' => $e->getMessage(),
+                'tap_id' => $tapId,
+            ]);
+
+            return response()->json([
+                'message' => 'gagal mendapatkan data saldo, silahkan coba lagi',
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Ambil saldo dari SP bila format valid; fallback ke sccttran_cashless.
+     */
+    private function resolveSaldo(string $tapId, string $custId, string &$nama): int
+    {
+        try {
+            $rows = DB::connection('DATA_MYSQL')
+                ->select('SELECT GetSaldoCard_1VACashless(?) AS saldo', [$tapId]);
+            $raw = (string) ($rows[0]->saldo ?? '');
+            $parts = array_values(array_filter(array_map('trim', explode('|', $raw)), static fn ($v) => $v !== ''));
+
+            // Format umum: status|saldo|nama ATAU id|saldo|nama
+            if (count($parts) >= 3) {
+                $maybeSaldo = $parts[1];
+                if (is_numeric($maybeSaldo)) {
+                    if (!empty($parts[2])) {
+                        $nama = $parts[2];
+                    }
+
+                    return (int) $maybeSaldo;
+                }
+            }
+
+            // Kadang SP hanya mengembalikan angka saldo
+            if (count($parts) === 1 && is_numeric($parts[0])) {
+                return (int) $parts[0];
+            }
+        } catch (\Throwable $e) {
+            Log::warning('getSaldo - SP failed, fallback to sccttran_cashless', [
+                'tap_id' => $tapId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $agg = DB::connection('DATA_MYSQL')
+            ->table('sccttran_cashless')
+            ->where('CUSTID', $custId)
+            ->selectRaw('COALESCE(SUM(KREDIT),0) - COALESCE(SUM(DEBET),0) AS saldo')
+            ->value('saldo');
+
+        return (int) $agg;
     }
 
     const STATUS_MAP = [
@@ -99,17 +149,17 @@ class TapBelanjaController extends Controller
 
     public function payment(Request $request)
     {
-        \Log::info('payment - Started', [
+        Log::info('payment - Started', [
             'tap_id' => $request->tap_id,
             'belanja_raw' => $request->belanja,
-            'session_user' => session('cashless_user.username')
+            'session_user' => session('cashless_user.username'),
         ]);
 
         $validator = Validator::make(
             $request->all(),
             [
-                "tap_id" => ["required", "string"],
-                "belanja" => ["required", 'regex:/^[0-9]+(\.[0-9]{3})*$/', 'not_in:0'],
+                'tap_id' => ['required', 'string'],
+                'belanja' => ['required', 'regex:/^[0-9]+(\.[0-9]{3})*$/', 'not_in:0'],
             ],
             ValidationMessage::messages(),
             ValidationMessage::attributes(),
@@ -121,26 +171,14 @@ class TapBelanjaController extends Controller
                 $message = "{$message} Dan beberapa error lainnya";
             }
 
-            \Log::warning('payment - Validation failed', [
-                'errors' => $validator->errors()->toArray()
-            ]);
-
-            return response()->json(
-                [
-                    "message" => $message,
-                    "errors" => $validator->errors(),
-                ],
-                422,
-            );
+            return response()->json([
+                'message' => $message,
+                'errors' => $validator->errors(),
+            ], 422);
         }
 
         try {
             $nominal = str_replace('.', '', $request->belanja);
-            \Log::info('payment - Process payment', [
-                'tap_id' => $request->tap_id,
-                'nominal' => $nominal,
-                'teller' => session('cashless_user.username')
-            ]);
 
             $result = DB::connection('DATA_MYSQL')
                 ->select(
@@ -149,18 +187,15 @@ class TapBelanjaController extends Controller
                         $request->tap_id,
                         $nominal,
                         session('cashless_user.username'),
-                    ]);
+                    ]
+                );
 
-            $result = $result[0]->result ?? "error";
-            \Log::info('payment - Raw result from WebPaymentBUY', ['result' => $result]);
-
+            $result = $result[0]->result ?? 'error';
             $statusKey = null;
             $data = [];
 
             if (str_contains($result, '|')) {
                 $parts = explode('|', $result);
-                \Log::info('payment - Exploded parts', ['parts' => $parts]);
-
                 $statusKey = strtolower($parts[0]);
 
                 if ($statusKey === 'ok') {
@@ -168,14 +203,9 @@ class TapBelanjaController extends Controller
                         'nama' => $parts[1] ?? null,
                         'sisa_saldo' => $parts[2] ?? null,
                     ];
-                    \Log::info('payment - Success transaction', [
-                        'nama' => $data['nama'],
-                        'sisa_saldo' => $data['sisa_saldo']
-                    ]);
                 }
             } else {
                 $statusKey = strtolower($result);
-                \Log::info('payment - Status key from result', ['statusKey' => $statusKey]);
             }
 
             $config = self::STATUS_MAP[$statusKey] ?? [
@@ -183,28 +213,20 @@ class TapBelanjaController extends Controller
                 'message' => 'Unknown error',
             ];
 
-            \Log::info('payment - Final response', [
+            return response()->json([
                 'status' => $statusKey,
                 'code' => $config['code'],
-                'message' => $config['message']
-            ]);
-
-            return response()->json([
-                'status' => $statusKey,
-                'code'   => $config['code'],
-                'message'=> $config['message'],
-                'data'   => $data,
+                'message' => $config['message'],
+                'data' => $data,
             ], 200);
-
         } catch (\Exception $e) {
-            \Log::error('payment - Exception occurred', [
+            Log::error('payment - Exception occurred', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
-                "message" => "gagal mendapatkan data saldo, silahkan coba lagi",
-                "error" => $e->getMessage()
+                'message' => 'gagal mendapatkan data saldo, silahkan coba lagi',
+                'error' => $e->getMessage(),
             ], 422);
         }
     }

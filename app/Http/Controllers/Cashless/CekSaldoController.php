@@ -7,25 +7,25 @@ use App\Models\ValidationMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class CekSaldoController extends Controller
 {
-    private string $title = "Cek Saldo";
-    private string $mainTitle = 'Cek Saldo';
+    private string $title = 'Cek Saldo';
     private string $cacheKey = 'Cek Saldo';
 
     public function __construct()
     {
-        $key = Str::slug($this->cacheKey) . '_cache_version';
-        Cache::add($key, 1);
+        Cache::add(Str::slug($this->cacheKey) . '_cache_version', 1);
     }
 
     public function index()
     {
-        $data['title'] = $this->title;
-        return view('cashless.admin.cek_saldo.index', $data);
+        return view('cashless.admin.cek_saldo.index', [
+            'title' => $this->title,
+        ]);
     }
 
     public function getData(Request $request)
@@ -33,7 +33,7 @@ class CekSaldoController extends Controller
         $validator = Validator::make(
             $request->all(),
             [
-                "tap_id" => ["required", "string"],
+                'tap_id' => ['required', 'string'],
             ],
             ValidationMessage::messages(),
             ValidationMessage::attributes(),
@@ -44,53 +44,34 @@ class CekSaldoController extends Controller
             if ($validator->errors()->count() > 1) {
                 $message = "{$message} Dan beberapa masalah validasi lainnya, silahkan periksa form anda!";
             }
-            return response()->json(
-                [
-                    "message" => $message,
-                    "errors" => $validator->errors(),
-                ],
-                422,
-            );
+
+            return response()->json([
+                'message' => $message,
+                'errors' => $validator->errors(),
+            ], 422);
         }
 
+        $tapId = trim((string) $request->input('tap_id'));
+
         try {
-            \Log::info('CekSaldo - Request tap_id:', ['tap_id' => $request->tap_id]);
-
-            $saldoResult = DB::connection('DATA_MYSQL')
-                ->select('SELECT GetSaldoCard_1VACashless(?) AS saldo', [$request->tap_id]);
-
-            $saldoRaw = $saldoResult[0]->saldo ?? '';
-            $saldoParts = explode('|', $saldoRaw);
-
-            if (count($saldoParts) !== 3) {
-                return response()->json([
-                    "message" => "Kartu diblokir atau tidak ditemukan",
-                    "errors" => ["tap_id" => ["Kartu diblokir atau tidak ditemukan"]],
-                ], 422);
-            }
-
-            $saldo = $saldoParts[1] ?? 0;
-            $namaFromSaldo = $saldoParts[2] ?? '';
-
-            // Limit jajan (sama seperti Cek Limit)
-            $limitJajan = 20000;
-
             $siswa = DB::connection('DATA_MYSQL')
                 ->table('scctcust')
-                ->leftJoin('sm_pin', 'sm_pin.CUSTID', '=', 'scctcust.CUSTID')
+                ->join('sm_pin', 'sm_pin.CUSTID', '=', 'scctcust.CUSTID')
                 ->select(['scctcust.CUSTID', 'scctcust.nmcust', 'scctcust.nocust'])
-                ->where('sm_pin.PID', $request->tap_id)
+                ->where('sm_pin.PID', $tapId)
                 ->first();
 
             if (!$siswa) {
                 return response()->json([
-                    "message" => "Kartu diblokir atau tidak ditemukan",
-                    "errors" => ["tap_id" => ["Kartu diblokir atau tidak ditemukan"]],
+                    'message' => 'Kartu diblokir atau tidak ditemukan',
+                    'errors' => ['tap_id' => ['Kartu diblokir atau tidak ditemukan']],
                 ], 422);
             }
 
-            $nama = $siswa->nmcust ?: $namaFromSaldo;
-            $nis = $siswa->nocust ?? '';
+            $nama = (string) ($siswa->nmcust ?? '');
+            $nis = (string) ($siswa->nocust ?? '');
+            $saldo = $this->resolveSaldo($tapId, (string) $siswa->CUSTID, $nama);
+            $limitJajan = 20000;
 
             $transaksi = DB::connection('DATA_MYSQL')
                 ->table('scctcashout')
@@ -107,14 +88,6 @@ class CekSaldoController extends Controller
                 })
                 ->values();
 
-            \Log::info('CekSaldo - Result:', [
-                'nama' => $nama,
-                'nis' => $nis,
-                'saldo' => $saldo,
-                'limit_jajan' => $limitJajan,
-                'transaksi_count' => $transaksi->count(),
-            ]);
-
             return response()->json([
                 'saldo' => $saldo,
                 'limit_jajan' => $limitJajan,
@@ -123,16 +96,48 @@ class CekSaldoController extends Controller
                 'transaksi' => $transaksi,
             ], 200);
         } catch (\Exception $e) {
-            \Log::error('CekSaldo - Error:', [
+            Log::error('CekSaldo - Error:', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'tap_id' => $tapId,
             ]);
 
             return response()->json([
-                "message" => "gagal mendapatkan data saldo, silahkan coba lagi",
-                "error" => $e->getMessage(),
+                'message' => 'gagal mendapatkan data saldo, silahkan coba lagi',
+                'error' => $e->getMessage(),
             ], 422);
         }
     }
-}
 
+    private function resolveSaldo(string $tapId, string $custId, string &$nama): int
+    {
+        try {
+            $rows = DB::connection('DATA_MYSQL')
+                ->select('SELECT GetSaldoCard_1VACashless(?) AS saldo', [$tapId]);
+            $raw = (string) ($rows[0]->saldo ?? '');
+            $parts = array_values(array_filter(array_map('trim', explode('|', $raw)), static fn ($v) => $v !== ''));
+
+            if (count($parts) >= 3 && is_numeric($parts[1])) {
+                if (!empty($parts[2])) {
+                    $nama = $parts[2];
+                }
+
+                return (int) $parts[1];
+            }
+
+            if (count($parts) === 1 && is_numeric($parts[0])) {
+                return (int) $parts[0];
+            }
+        } catch (\Throwable $e) {
+            Log::warning('CekSaldo - SP failed, fallback sccttran_cashless', [
+                'tap_id' => $tapId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return (int) DB::connection('DATA_MYSQL')
+            ->table('sccttran_cashless')
+            ->where('CUSTID', $custId)
+            ->selectRaw('COALESCE(SUM(KREDIT),0) - COALESCE(SUM(DEBET),0) AS saldo')
+            ->value('saldo');
+    }
+}

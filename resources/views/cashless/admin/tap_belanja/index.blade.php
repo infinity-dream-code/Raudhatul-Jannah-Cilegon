@@ -85,13 +85,13 @@
                     warningAlert('Silahkan tap kartu terlebih dahulu', 'tap_id');
                 } else if (tap_id && !belanja) {
                     loadingAlert("Memproses Kartu...");
-                    request = cashlessRequest('{{ route('cashless.admin.tap-belanja.get-saldo', [], false) }}', {
+                    request = cashlessRequest('/cashless/admin/tap-belanja/get-saldo', {
                         method: "POST",
                         body: formData
                     });
                 } else if (tap_id && belanja) {
                     loadingAlert("Memproses Belanja...");
-                    request = cashlessRequest('{{ route('cashless.admin.tap-belanja.payment', [], false) }}', {
+                    request = cashlessRequest('/cashless/admin/tap-belanja/payment', {
                         method: "POST",
                         body: formData
                     });
@@ -102,7 +102,9 @@
                     if (processForm.success === true) {
                         const result = processForm.data.data;
                         if (tap_id && !belanja) {
-                            if (!result || result.length !== 3) {
+                            // Terima array [id, saldo, nama] (minimal 3 elemen)
+                            const ok = Array.isArray(result) && result.length >= 3 && result[2] !== undefined;
+                            if (!ok) {
                                 warningAlert('Data tidak ditemukan, silahkan tap kartu yang valid', 'tap_id');
                                 document.getElementById('saldo').value = 0;
                                 document.getElementById('nama').value = '';
