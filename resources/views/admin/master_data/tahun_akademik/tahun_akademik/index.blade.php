@@ -147,7 +147,10 @@
                             <div class="mb-3">
                                 <label class="form-label required" for="thn_aka">Tahun Pelajaran</label>
                                 <input type="text" class="form-control" name="thn_aka" id="thn_aka" autocomplete="off"
-                                       placeholder="thn_aka" required>
+                                       placeholder="Contoh: 2024/2025" required>
+                                <div class="form-text">
+                                    Data tetap disimpan sebagai tahun (contoh 2024/2025). Di layar akan tampil sebagai Angkatan 1, Angkatan 2, dst (urut dari tahun tertua).
+                                </div>
                                 <div class="invalid-feedback" role="alert">
                                     <strong></strong>
                                 </div>

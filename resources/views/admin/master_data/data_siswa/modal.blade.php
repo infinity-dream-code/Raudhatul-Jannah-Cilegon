@@ -1,4 +1,4 @@
-@php use Carbon\Carbon; @endphp
+﻿@php use Carbon\Carbon; @endphp
 <meta name="csrf-token" content="{{ csrf_token() }}" xmlns="http://www.w3.org/1999/html">
 @php
     $year = Carbon::now()->format('Y');
@@ -132,7 +132,7 @@
 {{--                                            data-placeholder="Angkatan" required>--}}
 {{--                                        @isset($angkatan)--}}
 {{--                                            @foreach($angkatan as $item)--}}
-{{--                                                <option value="{{$item->id}}">{{$item->thn_aka}}</option>--}}
+{{--                                                <option value="{{$item->id}}">{{ angkatan_label($item->thn_aka) }}</option>--}}
 {{--                                            @endforeach--}}
 {{--                                        @else--}}
 {{--                                            <option>data kosong</option>--}}
@@ -263,7 +263,7 @@
                                             data-placeholder="Angkatan" required>
                                         @isset($angkatan)
                                             @foreach($angkatan as $item)
-                                                <option value="{{$item->id}}">{{$item->thn_aka}}</option>
+                                                <option value="{{$item->id}}">{{ angkatan_label($item->thn_aka) }}</option>
                                             @endforeach
                                         @else
                                             <option>data kosong</option>

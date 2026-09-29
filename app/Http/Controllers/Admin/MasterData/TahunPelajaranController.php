@@ -34,6 +34,7 @@ class TahunPelajaranController extends Controller
     {
         return [
             ['data' => null, 'name' => 'no', 'className' => 'text-center', 'columnType' => 'no'],
+            ['data' => 'angkatan_label', 'name' => 'Angkatan', 'searchable' => false, 'orderable' => false],
             ['data' => 'thn_aka', 'name' => 'Tahun Pelajaran', 'searchable' => true, 'orderable' => true],
         ];
     }
@@ -108,6 +109,7 @@ class TahunPelajaranController extends Controller
         try {
             DB::beginTransaction();
             mst_thn_aka::create(['thn_aka' => $request->thn_aka,]);
+            mst_thn_aka::forgetAngkatanNumberMap();
             DB::commit();
             return response()->json(['message' => 'Data ' . $this->mainTitle . ' telah disimpan']);
         } catch (Exception $e) {

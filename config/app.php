@@ -19,7 +19,7 @@ return [
     'name' => env('APP_NAME', 'Raudhatul Jannah Cilegon'),
     'nama_instansi' => env('APP_NAMA_INSTANSI', 'Raudhatul Jannah Cilegon'),
     'alamat' => env('APP_ALAMAT', 'Cilegon, Prov. Banten'),
-    'logo' => env('APP_LOGO', 'icon.png'),
+    'logo' => env('APP_LOGO', 'iconmu.jpeg'),
     'email' => env('APP_EMAIL', 'ypisabkho@gmail.com'),
     'telepon' => env('APP_TELEPON', 'SIKEU'),
     'domisili' => env('APP_DOMISILI', 'Cilegon'),

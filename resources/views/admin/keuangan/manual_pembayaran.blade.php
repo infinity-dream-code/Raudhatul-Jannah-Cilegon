@@ -1,4 +1,4 @@
-@extends('layouts.admin_new')
+﻿@extends('layouts.admin_new')
 @section('style')
     <link rel="stylesheet" href="{{asset('main/libs/select2/select2.css')}}">
     <link rel="stylesheet" href="{{asset('main/libs/bootstrap-datepicker/bootstrap-datepicker.css')}}">
@@ -64,7 +64,7 @@
                                 <option value="all">Semua</option>
                                 @isset($thn_aka)
                                     @foreach($thn_aka as $item)
-                                        <option value="{{$item->thn_aka}}">{{$item->thn_aka}}</option>
+                                        <option value="{{$item->thn_aka}}">{{ angkatan_label($item->thn_aka) }}</option>
                                     @endforeach
                                 @else
                                     <option>data kosong</option>
@@ -592,12 +592,12 @@
                         if (error.error || error.errors) processErros(error.error || error.errors);
                     } else {
                         const errorMessages = {
-                            401: 'Sesi anda sudah habis 🙏 <br>Silahkan muat ulang halaman untuk melanjutkan!',
-                            403: 'Anda tidak memiliki izin untuk mengakses halaman ini 😖',
-                            404: 'Halaman yang dituju tidak ditemukan 🧐',
-                            405: 'Metode tidak valid 🧐 <br>silahkan muat ulang halaman dan coba lagi!',
-                            419: 'Sesi anda sudah habis 🙏 <br>Silahkan muat ulang halaman untuk melanjutkan!',
-                            429: 'Terlalu banyak permintaan akses <br>silahkan tunggu beberapa saat 🙏',
+                            401: 'Sesi anda sudah habis ðŸ™ <br>Silahkan muat ulang halaman untuk melanjutkan!',
+                            403: 'Anda tidak memiliki izin untuk mengakses halaman ini ðŸ˜–',
+                            404: 'Halaman yang dituju tidak ditemukan ðŸ§',
+                            405: 'Metode tidak valid ðŸ§ <br>silahkan muat ulang halaman dan coba lagi!',
+                            419: 'Sesi anda sudah habis ðŸ™ <br>Silahkan muat ulang halaman untuk melanjutkan!',
+                            429: 'Terlalu banyak permintaan akses <br>silahkan tunggu beberapa saat ðŸ™',
                         };
                         errorAlert(errorMessages[error.status] || 'Terjadi kesalahan, silahkan coba memuat ulang halaman');
                     }

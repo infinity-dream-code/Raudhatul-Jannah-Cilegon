@@ -71,7 +71,7 @@
                                     @foreach($thn_aka as $item)
                                         <option value="{{$item->thn_aka}}"
                                             {{ request('filter.tahun_akademik') == $item->urut ? 'selected' : '' }}>
-                                            {{$item->thn_aka}}
+                                            {{ angkatan_label($item->thn_aka) }}
                                         </option>
                                     @endforeach
                                 @else
@@ -252,7 +252,7 @@
                                     @isset($thn_aka)
                                         @foreach($thn_aka as $item)
                                             <option value="{{$item->thn_aka}}">
-                                                {{$item->thn_aka}}
+                                                {{ angkatan_label($item->thn_aka) }}
                                             </option>
                                         @endforeach
                                     @else

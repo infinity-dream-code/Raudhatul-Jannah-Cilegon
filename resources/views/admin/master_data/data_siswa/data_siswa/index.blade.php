@@ -1,4 +1,4 @@
-@extends('layouts.admin_new')
+﻿@extends('layouts.admin_new')
 @section('title',$dataTitle??$mainTitle??$title??'')
 @section('style')
     <link rel="stylesheet" href="{{asset('main/libs/datatables-bs5/datatables.bootstrap5.css')}}">
@@ -69,7 +69,7 @@
                                     @isset($thn_aka)
                                         @foreach($thn_aka as $item)
                                             <option
-                                                value="{{$item->thn_aka}}">{{$item->thn_aka}}</option>
+                                                value="{{$item->thn_aka}}">{{ angkatan_label($item->thn_aka) }}</option>
                                         @endforeach
                                     @else
                                         <option>data kosong</option>
@@ -724,7 +724,7 @@
                 clearTimeout(timeoutId);
 
                 if (error.name === 'AbortError') {
-                    errorAlert('Permintaan terlalu lama ⏳, silakan coba lagi.');
+                    errorAlert('Permintaan terlalu lama â³, silakan coba lagi.');
                     return false;
                 }
 
@@ -740,12 +740,12 @@
                 }
 
                 const errorMessages = {
-                    401: 'Sesi anda sudah habis 🙏 <br>Silahkan muat ulang halaman atau login kembali!',
-                    403: 'Anda tidak memiliki izin untuk mengakses 😖',
-                    404: 'Halaman tidak ditemukan 🧐',
-                    405: 'Metode tidak valid 🧐 <br>Silakan coba lagi!',
-                    419: 'Sesi anda sudah habis 🙏 <br>Silahkan login kembali!',
-                    429: 'Terlalu banyak permintaan 🙏 <br>Tunggu beberapa saat!',
+                    401: 'Sesi anda sudah habis ðŸ™ <br>Silahkan muat ulang halaman atau login kembali!',
+                    403: 'Anda tidak memiliki izin untuk mengakses ðŸ˜–',
+                    404: 'Halaman tidak ditemukan ðŸ§',
+                    405: 'Metode tidak valid ðŸ§ <br>Silakan coba lagi!',
+                    419: 'Sesi anda sudah habis ðŸ™ <br>Silahkan login kembali!',
+                    429: 'Terlalu banyak permintaan ðŸ™ <br>Tunggu beberapa saat!',
                 };
 
                 errorAlert(

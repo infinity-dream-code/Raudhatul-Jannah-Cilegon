@@ -1,4 +1,4 @@
-@extends('layouts.admin_new')
+﻿@extends('layouts.admin_new')
 @section('style')
     <link rel="stylesheet" href="{{asset('main/libs/select2/select2.css')}}">
 
@@ -86,7 +86,7 @@
                                         @isset($thn_aka)
                                             @foreach($thn_aka as $item)
                                                 <option
-                                                    value="{{$item->thn_aka}}">{{$item->thn_aka}}</option>
+                                                    value="{{$item->thn_aka}}">{{ angkatan_label($item->thn_aka) }}</option>
                                             @endforeach
                                         @else
                                             <option>data kosong</option>
@@ -124,7 +124,7 @@
                                         @isset($thn_aka)
                                             @foreach($thn_aka as $item)
                                                 <option
-                                                    value="{{$item->thn_aka}}">{{$item->thn_aka}}</option>
+                                                    value="{{$item->thn_aka}}">{{ angkatan_label($item->thn_aka) }}</option>
                                             @endforeach
                                         @else
                                             <option>data kosong</option>

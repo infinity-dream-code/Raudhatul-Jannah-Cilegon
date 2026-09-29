@@ -1,4 +1,4 @@
-@extends('layouts.admin_new')
+﻿@extends('layouts.admin_new')
 @section('title', $dataTitle ?? $mainTitle ?? $title ?? '')
 
 @section('style')
@@ -43,7 +43,7 @@
                             <option value="">Pilih Tahun Pelajaran</option>
                             @isset($thn_aka)
                                 @foreach($thn_aka as $item)
-                                    <option value="{{ $item->thn_aka }}">{{ $item->thn_aka }}</option>
+                                    <option value="{{ $item->thn_aka }}">{{ angkatan_label($item->thn_aka) }}</option>
                                 @endforeach
                             @endisset
                         </select>
@@ -102,7 +102,7 @@
                             @endisset
                         </select>
                         <small class="text-muted">
-                            Periode (BILLAC) baru otomatis: deteksi dari nama Tagihan Baru (mis. "DRB JUNI" → bulan 06), fallback ke bulan saat ini bila tidak terdeteksi.
+                            Periode (BILLAC) baru otomatis: deteksi dari nama Tagihan Baru (mis. "DRB JUNI" â†’ bulan 06), fallback ke bulan saat ini bila tidak terdeteksi.
                         </small>
                     </div>
                 </div>

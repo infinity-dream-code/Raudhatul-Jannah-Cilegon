@@ -1,4 +1,4 @@
-@extends('layouts.admin_new')
+﻿@extends('layouts.admin_new')
 @section('title',$dataTitle??$mainTitle??$title??'')
 @section('style')
     <link rel="stylesheet" href="{{asset('main/libs/datatables-bs5/datatables.bootstrap5.css')}}">
@@ -83,7 +83,7 @@
                                 @isset($thn_aka)
                                     @foreach($thn_aka as $item)
                                         <option
-                                            value="{{$item->id}}">{{$item->thn_aka}}</option>
+                                            value="{{$item->id}}">{{ angkatan_label($item->thn_aka) }}</option>
                                     @endforeach
                                 @else
                                     <option>data kosong</option>
@@ -510,13 +510,13 @@
                         }
                     } else {
                         const errMessages = {
-                            401: 'Anda tidak memiliki izin untuk mengakses halaman ini 😖',
-                            403: 'Anda tidak memiliki izin untuk mengakses halaman ini 😖',
-                            404: 'Halaman yang dituju tidak ditemukan 🧐',
-                            405: 'Metode tidak valid 🧐 <br>silahkan muat ulang halaman dan coba lagi!',
-                            419: 'token anda sudah tidak valid 🙏 <br>Silahkan muat ulang halaman untuk mendapat token baru!',
-                            429: 'Terlalu banyak permintaan akses <br>silahkan tunggu beberapa saat 🙏',
-                            '5xx': 'Terjadi kesalahan saat memproses permintaan 😵‍💫. <br> silahkan muat ulang halaman'
+                            401: 'Anda tidak memiliki izin untuk mengakses halaman ini ðŸ˜–',
+                            403: 'Anda tidak memiliki izin untuk mengakses halaman ini ðŸ˜–',
+                            404: 'Halaman yang dituju tidak ditemukan ðŸ§',
+                            405: 'Metode tidak valid ðŸ§ <br>silahkan muat ulang halaman dan coba lagi!',
+                            419: 'token anda sudah tidak valid ðŸ™ <br>Silahkan muat ulang halaman untuk mendapat token baru!',
+                            429: 'Terlalu banyak permintaan akses <br>silahkan tunggu beberapa saat ðŸ™',
+                            '5xx': 'Terjadi kesalahan saat memproses permintaan ðŸ˜µâ€ðŸ’«. <br> silahkan muat ulang halaman'
                         };
                         const errMessage =
                             errMessages[xhr.status] ||

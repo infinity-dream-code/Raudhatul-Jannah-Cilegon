@@ -24,6 +24,7 @@ final class BrandLogo
 
         return array_values(array_unique(array_filter([
             $configured,
+            'iconmu.jpeg',
             'icon.png',
             'logo.png',
             'logo.jpg',
