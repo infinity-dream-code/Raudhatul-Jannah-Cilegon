@@ -1,4 +1,4 @@
-@extends('layouts.admin_new')
+﻿@extends('layouts.admin_new')
 @section('title',$dataTitle??$mainTitle??$title??'')
 @section('style')
     <link rel="stylesheet" href="{{asset('main/libs/datatables-bs5/datatables.bootstrap5.css')}}">

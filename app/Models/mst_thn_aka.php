@@ -47,21 +47,25 @@ class mst_thn_aka extends Model
             return static::$angkatanNumberMap;
         }
 
-        $map = [];
-        $rows = static::query()
-            ->whereNotNull('thn_aka')
-            ->where('thn_aka', '!=', '')
-            ->orderBy('thn_aka', 'asc')
-            ->pluck('thn_aka')
-            ->unique()
-            ->values();
+        try {
+            $map = [];
+            $rows = static::query()
+                ->whereNotNull('thn_aka')
+                ->where('thn_aka', '!=', '')
+                ->orderBy('thn_aka', 'asc')
+                ->pluck('thn_aka')
+                ->unique()
+                ->values();
 
-        $n = 1;
-        foreach ($rows as $thn) {
-            $map[(string) $thn] = $n++;
+            $n = 1;
+            foreach ($rows as $thn) {
+                $map[(string) $thn] = $n++;
+            }
+
+            return static::$angkatanNumberMap = $map;
+        } catch (\Throwable $e) {
+            return static::$angkatanNumberMap = [];
         }
-
-        return static::$angkatanNumberMap = $map;
     }
 
     public static function forgetAngkatanNumberMap(): void
