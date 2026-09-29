@@ -19,7 +19,12 @@ class SchoolScope
             return null;
         }
 
-        $code = $user->sekolah ?? $user->unit ?? null;
+        // cyber_key.fid → scctcust.CODE01 (kosong = semua)
+        $code = $user->fid
+            ?? $user->sekolah
+            ?? $user->unit
+            ?? ($user->getAttribute('fid') ?? null);
+
         if ($code === null) {
             return null;
         }

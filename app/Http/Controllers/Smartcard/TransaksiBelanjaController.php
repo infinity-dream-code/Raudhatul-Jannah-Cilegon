@@ -96,46 +96,11 @@ class TransaksiBelanjaController extends Controller
             })
             ->whereRaw('UPPER(TRIM(scctcashout.FIDBANK)) = ?', ['BUY']);
 
-        $this->applySchoolScope($query);
-        $this->applyKantinScope($query);
+        // Siswa tampil hanya jika CODE01 = cyber_key.fid (fid kosong = semua).
+        \App\Support\SchoolScope::apply($query, 'scctcust');
         $this->applyFilters($query, $filters);
 
         return $query;
-    }
-
-    private function applySchoolScope($query): void
-    {
-        $code01 = \App\Support\SchoolScope::codeFromUser();
-        if ($code01 === null || $code01 === '') {
-            return;
-        }
-
-        $query->whereRaw('TRIM(scctcust.CODE01) = ?', [$code01]);
-    }
-
-    /**
-     * Jika user login juga ada di sm_kantin, batasi hanya transaksi teller kantin tersebut.
-     */
-    private function applyKantinScope($query): void
-    {
-        $user = auth()->user();
-        if (!$user) {
-            return;
-        }
-
-        $username = trim((string) ($user->users ?? $user->username ?? ''));
-        if ($username === '') {
-            return;
-        }
-
-        $isKantinUser = DB::connection('DATA_MYSQL')
-            ->table('sm_kantin')
-            ->whereRaw('TRIM(username) = ?', [$username])
-            ->exists();
-
-        if ($isKantinUser) {
-            $query->whereRaw('TRIM(scctcashout.Teller) = ?', [$username]);
-        }
     }
 
     private function applyFilters($query, array $filters): void
