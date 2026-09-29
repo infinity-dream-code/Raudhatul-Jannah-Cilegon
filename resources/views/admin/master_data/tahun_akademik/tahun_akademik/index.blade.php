@@ -149,7 +149,7 @@
                                 <input type="text" class="form-control" name="thn_aka" id="thn_aka" autocomplete="off"
                                        placeholder="Contoh: 2024/2025" required>
                                 <div class="form-text">
-                                    Data tetap disimpan sebagai tahun (contoh 2024/2025). Di layar akan tampil sebagai Angkatan 1, Angkatan 2, dst (urut dari tahun tertua).
+                                    Isi tahun (contoh 2024/2025). Nomor angkatan terisi otomatis dari angkatan terakhir + 1.
                                 </div>
                                 <div class="invalid-feedback" role="alert">
                                     <strong></strong>

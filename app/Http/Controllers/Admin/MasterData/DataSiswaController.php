@@ -235,7 +235,7 @@ class DataSiswaController extends Controller
             ? $totalRecords
             : (clone $filteredQuery)->count("CUSTID");
 
-        $angkatanMap = mst_thn_aka::angkatanNumberMap();
+        $angkatanMap = mst_thn_aka::thnAkaToAngkatanMap();
 
         $records = $filteredQuery
             ->orderBy($columnName, $columnSortOrder)
@@ -247,8 +247,8 @@ class DataSiswaController extends Controller
                 $row = $item->toArray();
                 $nis = trim((string) ($item->nocust ?? ''));
                 $thnAka = $item->DESC04 !== null ? (string) $item->DESC04 : '';
-                $angkatanNo = $angkatanMap[$thnAka] ?? null;
-                $angkatanLabel = $angkatanNo ? "Angkatan {$angkatanNo}" : $thnAka;
+                $angkatanNo = $angkatanMap[$thnAka] ?? '';
+                $angkatanLabel = $angkatanNo !== '' ? "Angkatan {$angkatanNo}" : $thnAka;
 
                 $row["item_id"] = $item->CUSTID;
                 $row["select_reset"] = '<input type="checkbox" class="form-check-input reset-android-row" value="' . e((string) $item->CUSTID) . '">';

@@ -18,21 +18,23 @@ class mst_thn_aka extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        "urut",
         "thn_aka",
+        "angkatan",
     ];
 
     protected $appends = [
-        'angkatan_label',
+        "angkatan_label",
     ];
 
-    private const ANGKATAN_MAP_CACHE_KEY = 'mst_thn_aka.angkatan_number_map';
+    private const LABEL_MAP_CACHE_KEY = "mst_thn_aka.thn_aka_to_angkatan";
 
-    /** @var array<string, int>|null */
-    protected static ?array $angkatanNumberMap = null;
+    /** @var array<string, string>|null thn_aka => angkatan number */
+    protected static ?array $thnAkaToAngkatanMap = null;
 
     public static function getMstThnAkaAttributes(): array|object
     {
-        return static::select(["thn_aka"])
+        return static::select(["thn_aka", "angkatan"])
             ->whereNotNull("thn_aka")
             ->distinct()
             ->orderBy("thn_aka", "desc")
@@ -40,64 +42,73 @@ class mst_thn_aka extends Model
     }
 
     /**
-     * Map each thn_aka value to Angkatan number (oldest year = Angkatan 1).
-     *
-     * @return array<string, int>
+     * @return array<string, string>
      */
-    public static function angkatanNumberMap(): array
+    public static function thnAkaToAngkatanMap(): array
     {
-        if (static::$angkatanNumberMap !== null) {
-            return static::$angkatanNumberMap;
+        if (static::$thnAkaToAngkatanMap !== null) {
+            return static::$thnAkaToAngkatanMap;
         }
 
         try {
-            static::$angkatanNumberMap = Cache::remember(self::ANGKATAN_MAP_CACHE_KEY, 600, function () {
-                $map = [];
-                $rows = static::query()
-                    ->whereNotNull('thn_aka')
-                    ->where('thn_aka', '!=', '')
-                    ->orderBy('thn_aka', 'asc')
-                    ->pluck('thn_aka')
-                    ->unique()
-                    ->values();
+            static::$thnAkaToAngkatanMap = Cache::remember(self::LABEL_MAP_CACHE_KEY, 600, function () {
+                return static::query()
+                    ->whereNotNull("thn_aka")
+                    ->where("thn_aka", "!=", "")
+                    ->get(["thn_aka", "angkatan"])
+                    ->mapWithKeys(function ($row) {
+                        $no = trim((string) ($row->angkatan ?? ""));
 
-                $n = 1;
-                foreach ($rows as $thn) {
-                    $map[(string) $thn] = $n++;
-                }
-
-                return $map;
+                        return [(string) $row->thn_aka => $no];
+                    })
+                    ->all();
             });
         } catch (\Throwable $e) {
-            static::$angkatanNumberMap = [];
+            static::$thnAkaToAngkatanMap = [];
         }
 
-        return static::$angkatanNumberMap;
+        return static::$thnAkaToAngkatanMap;
     }
 
     public static function forgetAngkatanNumberMap(): void
     {
-        static::$angkatanNumberMap = null;
+        static::$thnAkaToAngkatanMap = null;
         try {
-            Cache::forget(self::ANGKATAN_MAP_CACHE_KEY);
+            Cache::forget(self::LABEL_MAP_CACHE_KEY);
         } catch (\Throwable $e) {
-            // ignore cache backend failures
+            // ignore
         }
+    }
+
+    public static function nextAngkatanNumber(): int
+    {
+        $max = static::query()
+            ->selectRaw("MAX(CAST(angkatan AS UNSIGNED)) as max_angkatan")
+            ->value("max_angkatan");
+
+        return ((int) $max) + 1;
+    }
+
+    public static function nextUrut(): int
+    {
+        return ((int) static::query()->max("urut")) + 1;
     }
 
     public static function labelFor(?string $thnAka): string
     {
-        if ($thnAka === null || $thnAka === '') {
-            return '';
+        if ($thnAka === null || $thnAka === "") {
+            return "";
         }
 
-        $n = static::angkatanNumberMap()[$thnAka] ?? null;
+        $no = static::thnAkaToAngkatanMap()[$thnAka] ?? "";
 
-        return $n ? "Angkatan {$n}" : $thnAka;
+        return $no !== "" ? "Angkatan {$no}" : $thnAka;
     }
 
     public function getAngkatanLabelAttribute(): string
     {
-        return static::labelFor($this->thn_aka !== null ? (string) $this->thn_aka : null);
+        $no = trim((string) ($this->attributes["angkatan"] ?? ""));
+
+        return $no !== "" ? "Angkatan {$no}" : (string) ($this->thn_aka ?? "");
     }
 }

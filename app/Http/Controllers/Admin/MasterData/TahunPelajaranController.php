@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin\MasterData;
 
 use App\Http\Controllers\Controller;
-use App\Models\mst_kelas;
 use App\Models\mst_thn_aka;
 use App\Models\ValidationMessage;
 use Exception;
@@ -19,11 +18,9 @@ class TahunPelajaranController extends Controller
 
     public function index()
     {
-        //        dd($angkatan);
         $data['title'] = $this->title;
         $data['mainTitle'] = $this->mainTitle;
         $data['dataTitle'] = $this->dataTitle;
-//        $data['modalLink'] = view('admin.master_data.data_siswa.modal', compact('kelas', 'angkatan'));
         $data['columnsUrl'] = route('admin.master-data.tahun-pelajaran.get-column');
         $data['datasUrl'] = route('admin.master-data.tahun-pelajaran.get-data');
 
@@ -53,39 +50,43 @@ class TahunPelajaranController extends Controller
 
         $columnName = 'thn_aka';
         $columnSortOrder = 'desc';
+        $allowedSort = ['thn_aka', 'angkatan', 'urut'];
 
         if (!empty($order_arr)) {
             $columnIndex = $columnIndex_arr[0]['column'] ?? null;
             if ($columnIndex !== null && !empty($columnName_arr[$columnIndex]['data']) && $columnName_arr[$columnIndex]['data'] !== 'no') {
-                $columnName = $columnName_arr[$columnIndex]['data'];
-                $columnSortOrder = $order_arr[0]['dir'] ?? 'desc';
+                $requested = $columnName_arr[$columnIndex]['data'];
+                if (in_array($requested, $allowedSort, true)) {
+                    $columnName = $requested;
+                    $columnSortOrder = $order_arr[0]['dir'] ?? 'desc';
+                }
             }
         }
 
-        // Total records
-        $totalRecords = mst_thn_aka::select('count(*) as allcount')->count();
-        $totalRecordswithFilter = mst_thn_aka::select('count(*) as allcount')
-            ->whereAny(['thn_aka'], 'like', '%' . $searchValue . '%')
-            ->count();
+        $totalRecords = mst_thn_aka::count();
+        $filteredQuery = mst_thn_aka::query()
+            ->when($searchValue !== '', function ($q) use ($searchValue) {
+                $q->where(function ($q2) use ($searchValue) {
+                    $q2->where('thn_aka', 'like', '%' . $searchValue . '%')
+                        ->orWhere('angkatan', 'like', '%' . $searchValue . '%');
+                });
+            });
 
-        // Fetch records
-        $records = mst_thn_aka::orderBy($columnName, $columnSortOrder)
-            ->whereAny(['thn_aka'], 'like', '%' . $searchValue . '%')
-            ->select('*')
+        $totalRecordswithFilter = (clone $filteredQuery)->count();
+
+        $records = $filteredQuery
+            ->orderBy($columnName, $columnSortOrder)
             ->skip($start)
             ->take($rowperpage)
             ->get()
-            ->map(function ($item) {
-                return $item;
-            })->toArray();
+            ->toArray();
 
-        $response = array(
+        return response()->json([
             'draw' => intval($draw),
             'recordsTotal' => $totalRecords,
             'recordsFiltered' => $totalRecordswithFilter,
             'data' => $records,
-        );
-        return response()->json($response);
+        ]);
     }
 
     public function store(Request $request)
@@ -100,20 +101,31 @@ class TahunPelajaranController extends Controller
         ], ValidationMessage::messages(), ValidationMessage::attributes()
         );
 
-        if ($validator->fails()) return response()->json(['message' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
+        }
 
-
-        $kelasExist = mst_thn_aka::where('thn_aka', $request->thn_aka)->first();
-        if ($kelasExist) return response()->json(['message' => 'Tahun Pelajaran sudah ada'], 422);
+        $exists = mst_thn_aka::where('thn_aka', $request->thn_aka)->first();
+        if ($exists) {
+            return response()->json(['message' => 'Tahun Pelajaran sudah ada'], 422);
+        }
 
         try {
-            DB::beginTransaction();
-            mst_thn_aka::create(['thn_aka' => $request->thn_aka,]);
+            DB::connection('DATA_MYSQL')->beginTransaction();
+
+            mst_thn_aka::create([
+                'urut' => mst_thn_aka::nextUrut(),
+                'thn_aka' => $request->thn_aka,
+                'angkatan' => (string) mst_thn_aka::nextAngkatanNumber(),
+            ]);
             mst_thn_aka::forgetAngkatanNumberMap();
-            DB::commit();
+
+            DB::connection('DATA_MYSQL')->commit();
+
             return response()->json(['message' => 'Data ' . $this->mainTitle . ' telah disimpan']);
         } catch (Exception $e) {
-            DB::rollBack();
+            DB::connection('DATA_MYSQL')->rollBack();
+
             return response()->json(['message' => 'Data ' . $this->mainTitle . ' gagal disimpan', 'error' => $e->getMessage()], 422);
         }
     }
