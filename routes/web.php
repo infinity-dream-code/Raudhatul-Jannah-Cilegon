@@ -251,6 +251,20 @@ Route::prefix("admin")
         });
     });
 
+Route::prefix('smartcard')
+    ->name('smartcard.')
+    ->middleware(['auth', 'check.roles:admin'])
+    ->group(function () {
+        Route::get('/data-kartu-siswa', [\App\Http\Controllers\Smartcard\DataKartuSiswaController::class, 'index'])->name('data_kartu');
+        Route::post('/data-kartu-siswa', [\App\Http\Controllers\Smartcard\DataKartuSiswaController::class, 'store'])->name('data_kartu.store');
+        Route::get('/data-kartu-siswa/siswa-search', [\App\Http\Controllers\Smartcard\DataKartuSiswaController::class, 'searchSiswa'])->name('data_kartu.siswa_search');
+
+        Route::get('/transaksi-belanja', [\App\Http\Controllers\Smartcard\TransaksiBelanjaController::class, 'index'])->name('transaksi_belanja');
+
+        Route::get('/rekap-pencairan-kantin', [\App\Http\Controllers\Smartcard\RekapPencairanKantinController::class, 'index'])->name('rekap_pencairan_kantin');
+        Route::post('/rekap-pencairan-kantin', [\App\Http\Controllers\Smartcard\RekapPencairanKantinController::class, 'store'])->name('rekap_pencairan_kantin.store');
+    });
+
 /*
 |--------------------------------------------------------------------------
 | Cashless (sm_kantin) — same app, separate login session

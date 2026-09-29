@@ -149,12 +149,24 @@ class DataTransaksiBelanjaController extends Controller
 
     private function baseQuery(?callable $filterQuery = null)
     {
-        return DB::connection('DATA_MYSQL')->table('scctcashout')
+        $username = trim((string) session('cashless_user.username', ''));
+
+        $query = DB::connection('DATA_MYSQL')->table('scctcashout')
             ->leftJoin('scctcust', 'scctcashout.CUSTID', '=', 'scctcust.CUSTID')
-            ->where('scctcashout.teller', '=', session('cashless_user.username'))
-            ->where(function ($query) use ($filterQuery) {
-                if ($filterQuery) $filterQuery($query);
-            });
+            ->whereRaw('UPPER(TRIM(scctcashout.FIDBANK)) = ?', ['BUY']);
+
+        // Setiap user kantin hanya melihat transaksi teller miliknya sendiri.
+        if ($username !== '') {
+            $query->whereRaw('TRIM(scctcashout.Teller) = ?', [$username]);
+        } else {
+            $query->whereRaw('1 = 0');
+        }
+
+        return $query->where(function ($q) use ($filterQuery) {
+            if ($filterQuery) {
+                $filterQuery($q);
+            }
+        });
     }
 
     public function getTotal(Request $request)
@@ -364,16 +376,22 @@ class DataTransaksiBelanjaController extends Controller
 
     public function total(): int
     {
-        $key = Str::slug($this->cacheKey);
+        $username = trim((string) session('cashless_user.username', ''));
+        $key = Str::slug($this->cacheKey) . ':total_all_data:' . Str::slug($username !== '' ? $username : 'guest');
 
         $total = Cache::remember(
-            "{$key}:total_all_data",
+            $key,
             now()->addMinutes(10),
-            function () {
+            function () use ($username) {
+                if ($username === '') {
+                    return 0;
+                }
+
                 $count = DB::connection('DATA_MYSQL')->table('scctcashout')
-                    ->where('teller', '=', session('cashless_user.username'))
+                    ->whereRaw('UPPER(TRIM(FIDBANK)) = ?', ['BUY'])
+                    ->whereRaw('TRIM(Teller) = ?', [$username])
                     ->count();
-                Log::info('DataTransaksiBelanja - Total cache miss, counting', ['count' => $count, 'user' => session('cashless_user.username')]);
+                Log::info('DataTransaksiBelanja - Total cache miss, counting', ['count' => $count, 'user' => $username]);
                 return $count;
             }
         );

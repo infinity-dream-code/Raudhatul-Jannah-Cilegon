@@ -127,7 +127,7 @@ class ExportImportDataController extends Controller
                 'unit' => $item['unit'] ?? null,
                 'kelas' => $item['kelas'] ?? null,
                 'kelompok' => $item['kelompok'] ?? null,
-                'angkatan' => $item['angkatan'] ?? null,
+                'angkatan' => mst_thn_aka::labelFor(isset($item['angkatan']) ? (string) $item['angkatan'] : null),
                 'gender' => $item['gender'] ?? null,
                 'ortu' => $item['ortu'] ?? $item['genus'] ?? null,
                 'alamat' => $item['alamat'] ?? null,

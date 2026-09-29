@@ -449,6 +449,7 @@ class SaldoVirtualAccountController extends Controller
                     $NOVA = scctcust::showVA($item->NUM2ND);
                 }
                 $item->NOVA = $NOVA;
+                $item->DESC04 = mst_thn_aka::labelFor($item->DESC04 !== null ? (string) $item->DESC04 : null);
                 unset($item->CUSTID);
                 return $item;
             })->toArray();

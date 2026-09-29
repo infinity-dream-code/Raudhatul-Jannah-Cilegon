@@ -102,6 +102,29 @@
                 </li>
             </ul>
         </li>
+        <li class="menu-item {{ request()->routeIs('smartcard.*') ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon ri ri-bank-card-line"></i>
+                <div data-i18n="Smartcard">Smartcard</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ request()->routeIs('smartcard.data_kartu*') ? 'active' : '' }}">
+                    <a href="{{ route('smartcard.data_kartu') }}" class="menu-link">
+                        <div data-i18n="Data Kartu Siswa">Data Kartu Siswa</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('smartcard.transaksi_belanja') ? 'active' : '' }}">
+                    <a href="{{ route('smartcard.transaksi_belanja') }}" class="menu-link">
+                        <div data-i18n="Transaksi Belanja">Transaksi Belanja</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('smartcard.rekap_pencairan_kantin') ? 'active' : '' }}">
+                    <a href="{{ route('smartcard.rekap_pencairan_kantin') }}" class="menu-link">
+                        <div data-i18n="Rekap Pencairan Kantin">Rekap Pencairan Kantin</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
         {{-- Manual Input disembunyikan untuk Raudhatul Jannah Cilegon
         <li class="menu-item {{ Request::is(['admin/manual-input*']) ? 'active open' : '' }}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">

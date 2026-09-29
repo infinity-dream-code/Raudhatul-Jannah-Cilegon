@@ -148,6 +148,14 @@ class BebanPostController extends Controller
             ->skip($start)
             ->take($rowperpage)
             ->get()
+            ->map(function ($item) {
+                $row = $item->toArray();
+                if (isset($row['thn_masuk'])) {
+                    $row['thn_masuk'] = mst_thn_aka::labelFor($row['thn_masuk'] !== null ? (string) $row['thn_masuk'] : null);
+                }
+
+                return $row;
+            })
             ->toArray();
 
         if ($totalRecords < $totalRecordswithFilter) {

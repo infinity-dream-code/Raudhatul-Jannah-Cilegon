@@ -558,6 +558,7 @@ class RekapTagihanController extends Controller
             $item->Urutan = (string) $urut;
             if (!$item->NOCUST || $item->NOCUST == '-') $item->NOCUST = null;
             if (!$item->NUM2ND || $item->NUM2ND == '-') $item->NUM2ND = null;
+            $item->DESC04 = mst_thn_aka::labelFor($item->DESC04 !== null ? (string) $item->DESC04 : null);
             return $item;
         });
 

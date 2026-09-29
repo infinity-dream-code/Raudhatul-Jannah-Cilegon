@@ -99,7 +99,11 @@ class EditManualController extends Controller
             'CODE03' => $item->CODE03,
             'kelas' => trim(($item->DESC02 ?? '') . ' ' . ($item->DESC03 ?? '')),
             'jenjang' => $item->DESC02,
-            'angkatan' => $item->DESC04 ?? $item->angkatan ?? null,
+            'angkatan' => mst_thn_aka::labelFor(
+                ($item->DESC04 ?? $item->angkatan ?? null) !== null
+                    ? (string) ($item->DESC04 ?? $item->angkatan)
+                    : null
+            ),
         ];
     }
 

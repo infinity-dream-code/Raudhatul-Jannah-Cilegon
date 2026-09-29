@@ -364,7 +364,7 @@ class DataSiswaController extends Controller
                     "unit" => $item->CODE02,
                     "kelompok" => $item->DESC02,
                     "kelas" => trim(($item->DESC02 ?? "") . " " . ($item->DESC03 ?? "")),
-                    "thn_aka" => $item->DESC04,
+                    "thn_aka" => mst_thn_aka::labelFor($item->DESC04 !== null ? (string) $item->DESC04 : null),
                 ];
             });
 
