@@ -15,6 +15,7 @@
 
     <title>@yield('title', config('app.name')) - {{ config('app.name') }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
+    <meta name="keep-alive-url" content="{{ route('admin.keep-alive') }}"/>
     <meta name="description" content="Core system ICT "/>
 
     <link rel="icon" type="image/x-icon" href="{{asset('favicon.ico')}}"/>
@@ -371,6 +372,7 @@
         });
     });
 </script>
+<script src="{{ asset('js/session-keepalive.js') }}?v=20260929-auth1"></script>
 
 @hasSection('formattedNumber')
     <script src="{{asset('js/helper/formattedNumber.min.js')}}"></script>

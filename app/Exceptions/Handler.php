@@ -2,7 +2,11 @@
 
 namespace App\Exceptions;
 
+use App\Support\PersistentLogin;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Session\TokenMismatchException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -26,5 +30,98 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    public function render($request, Throwable $e)
+    {
+        if ($e instanceof TokenMismatchException) {
+            try {
+                PersistentLogin::restoreFromRequest($request);
+            } catch (Throwable) {
+                //
+            }
+
+            if ($request->hasSession()) {
+                $request->session()->regenerateToken();
+            }
+
+            if (PersistentLogin::isAjaxRequest($request)) {
+                return response()->json([
+                    'ok' => true,
+                    'retry' => true,
+                    'token' => csrf_token(),
+                ], 419);
+            }
+
+            if ($request->isMethod('GET')) {
+                return redirect()->to($request->fullUrl());
+            }
+
+            return redirect()->back();
+        }
+
+        if ($e instanceof AuthenticationException) {
+            $user = null;
+            try {
+                $user = PersistentLogin::restoreFromRequest($request);
+            } catch (Throwable $ex) {
+                if (
+                    PersistentLogin::isTransient($ex)
+                    && $request->isMethod('GET')
+                    && !$request->boolean('_retry')
+                ) {
+                    return redirect()->to($request->fullUrlWithQuery(['_retry' => 1]));
+                }
+            }
+
+            if ($user) {
+                if (PersistentLogin::isAjaxRequest($request)) {
+                    return response()->json([
+                        'ok' => true,
+                        'retry' => true,
+                        'token' => csrf_token(),
+                    ], 401);
+                }
+
+                if ($request->isMethod('GET')) {
+                    return redirect()->to($request->fullUrl());
+                }
+
+                return redirect()->back();
+            }
+
+            return PersistentLogin::unauthenticatedResponse($request);
+        }
+
+        if (
+            $request->isMethod('GET')
+            && !$request->boolean('_retry')
+            && $this->isTransientServerError($e)
+        ) {
+            return redirect()->to($request->fullUrlWithQuery(['_retry' => 1]));
+        }
+
+        return parent::render($request, $e);
+    }
+
+    private function isTransientServerError(Throwable $e): bool
+    {
+        if ($e instanceof HttpExceptionInterface && $e->getStatusCode() !== 500) {
+            return false;
+        }
+
+        if (PersistentLogin::isTransient($e)) {
+            return true;
+        }
+
+        $message = strtolower($e->getMessage().' '.$e->getPrevious()?->getMessage());
+
+        return str_contains($message, 'has gone away')
+            || str_contains($message, 'deadlock')
+            || str_contains($message, 'lock wait timeout')
+            || str_contains($message, 'unable to obtain lock')
+            || (str_contains($message, 'session') && str_contains($message, 'lock'))
+            || str_contains($message, 'sqlstate[40001]')
+            || str_contains($message, 'sqlstate[hy000]');
     }
 }
