@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\MasterData;
 use App\Http\Controllers\Controller;
 use App\Models\mst_kelas;
 use App\Models\mst_sekolah;
+use App\Models\mst_thn_aka;
 use App\Models\scctcust;
 use App\Models\ValidationMessage;
 use App\Support\AndroidLogonFixerProcedure;
@@ -49,14 +50,8 @@ class DataSiswaController extends Controller
         $data["columnsUrl"] = route("admin.master-data.data-siswa.get-column");
         $data["datasUrl"] = route("admin.master-data.data-siswa.get-data");
 
-        $data["thn_aka"] = scctcust::query()
-            ->whereNotNull("DESC04")
-            ->where("DESC04", "!=", "")
-            ->when($this->unitScope, fn ($q) => $q->where("CODE01", $this->unitScope))
-            ->select("DESC04 as thn_aka")
-            ->distinct()
-            ->orderBy("DESC04", "desc")
-            ->get();
+        // Master table is small; avoid DISTINCT on scctcust (slow on large student data).
+        $data["thn_aka"] = mst_thn_aka::getMstThnAkaAttributes();
 
         $data["sekolah"] = mst_sekolah::when($this->unitScope, function ($query) {
             $query->where(function ($q) {
@@ -235,7 +230,12 @@ class DataSiswaController extends Controller
             });
         });
 
-        $totalRecordsWithFilter = (clone $filteredQuery)->count("CUSTID");
+        // Same result as total when not searching — skip a second full table COUNT.
+        $totalRecordsWithFilter = $searchValue === ""
+            ? $totalRecords
+            : (clone $filteredQuery)->count("CUSTID");
+
+        $angkatanMap = mst_thn_aka::angkatanNumberMap();
 
         $records = $filteredQuery
             ->orderBy($columnName, $columnSortOrder)
@@ -243,9 +243,13 @@ class DataSiswaController extends Controller
             ->take($length)
             ->select($select)
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item) use ($angkatanMap) {
                 $row = $item->toArray();
                 $nis = trim((string) ($item->nocust ?? ''));
+                $thnAka = $item->DESC04 !== null ? (string) $item->DESC04 : '';
+                $angkatanNo = $angkatanMap[$thnAka] ?? null;
+                $angkatanLabel = $angkatanNo ? "Angkatan {$angkatanNo}" : $thnAka;
+
                 $row["item_id"] = $item->CUSTID;
                 $row["select_reset"] = '<input type="checkbox" class="form-check-input reset-android-row" value="' . e((string) $item->CUSTID) . '">';
                 $row["nis"] = $item->nocust;
@@ -254,7 +258,8 @@ class DataSiswaController extends Controller
                     : '';
                 $row["no_pendaftaran"] = $item->NUM2ND;
                 $row["nama"] = $item->nmcust;
-                $row["angkatan"] = $item->DESC04;
+                $row["DESC04"] = $angkatanLabel;
+                $row["angkatan"] = $angkatanLabel;
                 $row["gender"] = $item->CODE04;
                 $row["alamat"] = $item->DESC05;
                 $row["ayah"] = $item->GENUS;
@@ -306,7 +311,7 @@ class DataSiswaController extends Controller
 
                 return [
                     "id" => $item->CUSTID,
-                    "text" => "{$identifier} - {$item->nmcust} | {$item->CODE02} - {$item->DESC02} - {$item->DESC03} - {$item->DESC04}",
+                    "text" => "{$identifier} - {$item->nmcust} | {$item->CODE02} - {$item->DESC02} - {$item->DESC03} - " . mst_thn_aka::labelFor($item->DESC04 !== null ? (string) $item->DESC04 : null),
                     "CUSTID" => $item->CUSTID,
                     "NOCUST" => $item->nocust,
                     "NUM2ND" => $item->NUM2ND,
@@ -314,7 +319,7 @@ class DataSiswaController extends Controller
                     "CODE02" => $item->CODE02,
                     "DESC02" => $item->DESC02,
                     "DESC03" => $item->DESC03,
-                    "DESC04" => $item->DESC04,
+                    "DESC04" => mst_thn_aka::labelFor($item->DESC04 !== null ? (string) $item->DESC04 : null),
                     "GENUS" => null,
                 ];
             });

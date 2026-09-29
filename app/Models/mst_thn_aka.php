@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class mst_thn_aka extends Model
 {
@@ -23,6 +24,8 @@ class mst_thn_aka extends Model
     protected $appends = [
         'angkatan_label',
     ];
+
+    private const ANGKATAN_MAP_CACHE_KEY = 'mst_thn_aka.angkatan_number_map';
 
     /** @var array<string, int>|null */
     protected static ?array $angkatanNumberMap = null;
@@ -48,29 +51,38 @@ class mst_thn_aka extends Model
         }
 
         try {
-            $map = [];
-            $rows = static::query()
-                ->whereNotNull('thn_aka')
-                ->where('thn_aka', '!=', '')
-                ->orderBy('thn_aka', 'asc')
-                ->pluck('thn_aka')
-                ->unique()
-                ->values();
+            static::$angkatanNumberMap = Cache::remember(self::ANGKATAN_MAP_CACHE_KEY, 600, function () {
+                $map = [];
+                $rows = static::query()
+                    ->whereNotNull('thn_aka')
+                    ->where('thn_aka', '!=', '')
+                    ->orderBy('thn_aka', 'asc')
+                    ->pluck('thn_aka')
+                    ->unique()
+                    ->values();
 
-            $n = 1;
-            foreach ($rows as $thn) {
-                $map[(string) $thn] = $n++;
-            }
+                $n = 1;
+                foreach ($rows as $thn) {
+                    $map[(string) $thn] = $n++;
+                }
 
-            return static::$angkatanNumberMap = $map;
+                return $map;
+            });
         } catch (\Throwable $e) {
-            return static::$angkatanNumberMap = [];
+            static::$angkatanNumberMap = [];
         }
+
+        return static::$angkatanNumberMap;
     }
 
     public static function forgetAngkatanNumberMap(): void
     {
         static::$angkatanNumberMap = null;
+        try {
+            Cache::forget(self::ANGKATAN_MAP_CACHE_KEY);
+        } catch (\Throwable $e) {
+            // ignore cache backend failures
+        }
     }
 
     public static function labelFor(?string $thnAka): string
