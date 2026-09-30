@@ -53,7 +53,7 @@ class PersistentLogin
             self::encodePayload($user),
             self::lifetimeMinutes(),
             config('session.path', '/'),
-            config('session.domain'),
+            self::cookieDomain(),
             self::secure(),
             true,
             false,
@@ -68,7 +68,7 @@ class PersistentLogin
             '',
             -2628000,
             config('session.path', '/'),
-            config('session.domain'),
+            self::cookieDomain(),
             self::secure(),
             true,
             false,
@@ -305,5 +305,24 @@ class PersistentLogin
         }
 
         return (bool) request()?->isSecure();
+    }
+
+    /**
+     * Selalu host-only. Domain induk (.smartpayment.co.id) membuat cookie
+     * saling timpa antar proyek di subdomain berbeda.
+     */
+    private static function cookieDomain(): ?string
+    {
+        $domain = config('session.domain');
+        if (!is_string($domain)) {
+            return null;
+        }
+
+        $domain = trim($domain);
+        if ($domain === '' || str_starts_with($domain, '.')) {
+            return null;
+        }
+
+        return $domain;
     }
 }

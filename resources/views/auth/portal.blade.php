@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name') }} — Portal</title>
+    <title>{{ config('app.name', 'Raudhatul Jannah Cilegon') }} — Portal</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="keep-alive-url" content="{{ route('admin.keep-alive') }}">
     <link rel="icon" type="image/jpeg" href="{{ BrandLogo::assetUrl() }}">

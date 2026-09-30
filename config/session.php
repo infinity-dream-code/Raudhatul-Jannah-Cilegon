@@ -126,10 +126,9 @@ return [
     |
     */
 
-    'cookie' => env(
-        'SESSION_COOKIE',
-        Str::slug(env('APP_NAME', 'laravel'), '_').'_session'
-    ),
+    // Nama unik per proyek — jangan turunkan dari APP_NAME agar tidak bentrok
+    // dengan app lain di *.smartpayment.co.id (mis. Al-Multazam).
+    'cookie' => env('SESSION_COOKIE', 'jannah_cilegon_session'),
 
     /*
     |--------------------------------------------------------------------------
@@ -155,7 +154,9 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN'),
+    // Kosong = host-only (hanya subdomain ini). Jangan set .smartpayment.co.id
+    // supaya cookie/CSRF tidak saling timpa antar proyek.
+    'domain' => env('SESSION_DOMAIN') ?: null,
 
     /*
     |--------------------------------------------------------------------------

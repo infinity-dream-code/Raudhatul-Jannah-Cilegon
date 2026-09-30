@@ -1,4 +1,5 @@
 @extends('layouts.login_layout')
+@section('title', config('app.name', 'Raudhatul Jannah Cilegon') . ' — Login')
 @section('content')
     <link rel="stylesheet" href="{{asset('main/css/pages/page-auth.css')}}">
     <style>

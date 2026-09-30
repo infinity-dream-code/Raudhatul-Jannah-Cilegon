@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <title>@yield('title', config('app.name'))</title>
+    <title>@yield('title', config('app.name', 'Raudhatul Jannah Cilegon'))</title>
     <meta charset="utf-8"/>
     <meta name="description" content="
             Sistem Keuangan, Inovasi Cipta Teknologi

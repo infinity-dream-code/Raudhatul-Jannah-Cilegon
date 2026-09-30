@@ -12,7 +12,7 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"/>
 
-    <title>@yield('title', config('app.name')) - {{ config('app.name') }}</title>
+    <title>@yield('title', config('app.name', 'Raudhatul Jannah Cilegon')) - {{ config('app.name', 'Raudhatul Jannah Cilegon') }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
     <meta name="keep-alive-url" content="{{ route('admin.keep-alive') }}"/>
     <meta name="description" content="Core system ICT "/>
