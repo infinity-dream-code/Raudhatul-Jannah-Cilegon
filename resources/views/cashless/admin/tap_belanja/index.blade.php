@@ -3,7 +3,7 @@
 @section('style')
     <link rel="stylesheet" href="{{asset('main/libs/apex-charts/apex-charts.css')}}"/>
     <link rel="stylesheet" href="{{ asset('css/cashless-face-pay.css') }}?v=1"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.css"/>
+    <link rel="stylesheet" href="{{ asset('vendor/toastify/toastify.min.css') }}?v=1"/>
     <style>
         .cashless-face-wrap .k-modal { position: fixed; inset: 0; z-index: 1090; display: flex; align-items: center; justify-content: center; }
         .cashless-face-wrap .k-modal[hidden] { display: none !important; }
@@ -86,8 +86,8 @@
 @section('errorInputHelper', true)
 @section('script')
     @if($faceDbReady ?? false)
-        <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+        <script src="{{ asset('vendor/toastify/toastify.min.js') }}?v=1"></script>
+        <script src="{{ asset('vendor/face-api/face-api.min.js') }}?v=1"></script>
         <script src="{{ asset('js/cashless/presensi-camera.js') }}?v=1"></script>
         <script>
             window.TAP_BELANJA_FACE = {
@@ -95,9 +95,10 @@
                 saldoUrl: @json(route('cashless.admin.tap-belanja.get-saldo-nis')),
                 paymentUrl: @json(route('cashless.admin.tap-belanja.payment-nis')),
                 csrf: @json(csrf_token()),
+                modelUrl: @json(asset('vendor/face-api/weights')),
             };
         </script>
-        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261005"></script>
+        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261005b"></script>
         <script defer>
             document.addEventListener('DOMContentLoaded', function () {
                 var faceTab = document.getElementById('tab-face-btn');

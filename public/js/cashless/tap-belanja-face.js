@@ -4,7 +4,9 @@
 (function () {
   "use strict";
 
-  var MODEL_URL = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights";
+  var MODEL_URL =
+    (window.TAP_BELANJA_FACE && window.TAP_BELANJA_FACE.modelUrl) ||
+    "/vendor/face-api/weights";
   var MATCH_THRESHOLD = 0.48;
   var COOLDOWN_MS = 5000;
   var DETECT_MS = 500;
