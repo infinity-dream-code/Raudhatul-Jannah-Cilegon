@@ -139,7 +139,7 @@ class TapBelanjaController extends Controller
 
         $saldoSebelum = $request->has('saldoSebelum') ? (int) $request->input('saldoSebelum') : null;
         $fakeRequest = new Request([
-            'tap_id' => $resolved['tap_id'],
+            'tap_id' => $resolved['nocust'],
             'belanja' => number_format($nominal, 0, '', '.'),
             'keterangan' => (string) $request->input('keterangan', ''),
         ]);
@@ -332,12 +332,24 @@ class TapBelanjaController extends Controller
 
         try {
             $nominal = str_replace('.', '', $request->belanja);
+            $resolvedPay = $this->resolveNocustForPayment((string) $request->tap_id);
+
+            if (!$resolvedPay) {
+                $config = self::STATUS_MAP['unknown_or_blocked_card'];
+
+                return response()->json([
+                    'status' => 'unknown_or_blocked_card',
+                    'code' => $config['code'],
+                    'message' => $config['message'],
+                    'data' => [],
+                ], 200);
+            }
 
             $result = DB::connection('DATA_MYSQL')
                 ->select(
                     'SELECT VPSPaymentBUY(?,?,?) AS result',
                     [
-                        $request->tap_id,
+                        $resolvedPay['nocust'],
                         $nominal,
                         session('cashless_user.username'),
                     ]
@@ -356,16 +368,16 @@ class TapBelanjaController extends Controller
                         'nama' => $parts[1] ?? null,
                         'sisa_saldo' => $parts[2] ?? null,
                     ];
-                    $this->applyKeterangan(
-                        (string) $request->tap_id,
+                    $this->applyKeteranganByCustId(
+                        $resolvedPay['cust_id'],
                         (string) $request->input('keterangan', '')
                     );
                 }
             } else {
                 $statusKey = strtolower($result);
                 if ($statusKey === 'ok') {
-                    $this->applyKeterangan(
-                        (string) $request->tap_id,
+                    $this->applyKeteranganByCustId(
+                        $resolvedPay['cust_id'],
                         (string) $request->input('keterangan', '')
                     );
                 }
@@ -394,7 +406,54 @@ class TapBelanjaController extends Controller
     }
 
     /**
-     * @return array{tap_id: string, cust_id: string, nama: string}|null
+     * VPSPaymentBUY memakai NOCUST (bukan sm_pin.PID).
+     * Input boleh PID kartu atau NOCUST/NIS.
+     *
+     * @return array{nocust: string, cust_id: string, nama: string}|null
+     */
+    private function resolveNocustForPayment(string $raw): ?array
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return null;
+        }
+
+        $byNocust = DB::connection('DATA_MYSQL')
+            ->table('scctcust')
+            ->select(['CUSTID', 'NMCUST', 'NOCUST'])
+            ->whereRaw('TRIM(NOCUST) = ?', [$raw])
+            ->whereRaw("TRIM(CAST(STCUST AS CHAR)) = '1'")
+            ->first();
+
+        if ($byNocust) {
+            return [
+                'nocust' => trim((string) $byNocust->NOCUST),
+                'cust_id' => trim((string) $byNocust->CUSTID),
+                'nama' => trim((string) ($byNocust->NMCUST ?? '')),
+            ];
+        }
+
+        $byPid = DB::connection('DATA_MYSQL')
+            ->table('scctcust')
+            ->join('sm_pin', 'sm_pin.CUSTID', '=', 'scctcust.CUSTID')
+            ->select(['scctcust.CUSTID', 'scctcust.NMCUST', 'scctcust.NOCUST'])
+            ->where('sm_pin.PID', $raw)
+            ->whereRaw("TRIM(CAST(scctcust.STCUST AS CHAR)) = '1'")
+            ->first();
+
+        if (!$byPid || blank($byPid->NOCUST ?? null)) {
+            return null;
+        }
+
+        return [
+            'nocust' => trim((string) $byPid->NOCUST),
+            'cust_id' => trim((string) $byPid->CUSTID),
+            'nama' => trim((string) ($byPid->NMCUST ?? '')),
+        ];
+    }
+
+    /**
+     * @return array{tap_id: string, cust_id: string, nama: string, nocust: string}|null
      */
     private function resolveSiswaByNis(string $nis): ?array
     {
@@ -403,24 +462,21 @@ class TapBelanjaController extends Controller
             return null;
         }
 
-        $siswa = DB::connection('DATA_MYSQL')
-            ->table('scctcust')
-            ->join('sm_pin', 'sm_pin.CUSTID', '=', 'scctcust.CUSTID')
-            ->select(['scctcust.CUSTID', 'scctcust.nmcust', 'scctcust.nocust', 'sm_pin.PID'])
-            ->where(function ($q) use ($nis) {
-                $q->where('scctcust.NOCUST', $nis)
-                    ->orWhereRaw('TRIM(scctcust.NOCUST) = ?', [$nis]);
-            })
-            ->first();
-
-        if (!$siswa || blank($siswa->PID ?? null)) {
+        $resolved = $this->resolveNocustForPayment($nis);
+        if (!$resolved) {
             return null;
         }
 
+        $pid = DB::connection('DATA_MYSQL')
+            ->table('sm_pin')
+            ->where('CUSTID', $resolved['cust_id'])
+            ->value('PID');
+
         return [
-            'tap_id' => trim((string) $siswa->PID),
-            'cust_id' => trim((string) $siswa->CUSTID),
-            'nama' => trim((string) ($siswa->nmcust ?? '')),
+            'tap_id' => $pid ? trim((string) $pid) : $resolved['nocust'],
+            'nocust' => $resolved['nocust'],
+            'cust_id' => $resolved['cust_id'],
+            'nama' => $resolved['nama'],
         ];
     }
 
@@ -442,28 +498,16 @@ class TapBelanjaController extends Controller
     /**
      * Simpan keterangan ke baris scctcashout terbaru setelah VPSPaymentBUY sukses.
      */
-    private function applyKeterangan(string $tapId, string $keterangan): void
+    private function applyKeteranganByCustId(string $custId, string $keterangan): void
     {
         $keterangan = mb_substr(trim($keterangan), 0, 50);
-        if ($keterangan === '') {
-            return;
-        }
-
+        $custId = trim($custId);
         $teller = trim((string) session('cashless_user.username', ''));
-        if ($teller === '' || $tapId === '') {
+        if ($keterangan === '' || $custId === '' || $teller === '') {
             return;
         }
 
         try {
-            $custId = DB::connection('DATA_MYSQL')
-                ->table('sm_pin')
-                ->where('PID', $tapId)
-                ->value('CUSTID');
-
-            if (!$custId) {
-                return;
-            }
-
             $urut = DB::connection('DATA_MYSQL')
                 ->table('scctcashout')
                 ->where('CUSTID', $custId)

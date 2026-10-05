@@ -250,7 +250,148 @@
       });
   }
 
-  function buildRefs() {
+  var CACHE_DB = "cashless_face_refs_v1";
+  var CACHE_STORE = "descriptors";
+  var CACHE_KEY = "tap_belanja_refs";
+  var CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari
+
+  function openCacheDb() {
+    return new Promise(function (resolve, reject) {
+      if (!window.indexedDB) {
+        reject(new Error("no idb"));
+        return;
+      }
+      var req = indexedDB.open(CACHE_DB, 1);
+      req.onupgradeneeded = function () {
+        var db = req.result;
+        if (!db.objectStoreNames.contains(CACHE_STORE)) {
+          db.createObjectStore(CACHE_STORE);
+        }
+      };
+      req.onsuccess = function () {
+        resolve(req.result);
+      };
+      req.onerror = function () {
+        reject(req.error || new Error("idb open fail"));
+      };
+    });
+  }
+
+  function idbGet(key) {
+    return openCacheDb().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(CACHE_STORE, "readonly");
+        var store = tx.objectStore(CACHE_STORE);
+        var req = store.get(key);
+        req.onsuccess = function () {
+          resolve(req.result || null);
+        };
+        req.onerror = function () {
+          reject(req.error);
+        };
+      });
+    });
+  }
+
+  function idbSet(key, value) {
+    return openCacheDb().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(CACHE_STORE, "readwrite");
+        var store = tx.objectStore(CACHE_STORE);
+        var req = store.put(value, key);
+        req.onsuccess = function () {
+          resolve(true);
+        };
+        req.onerror = function () {
+          reject(req.error);
+        };
+      });
+    });
+  }
+
+  function idbDel(key) {
+    return openCacheDb()
+      .then(function (db) {
+        return new Promise(function (resolve) {
+          var tx = db.transaction(CACHE_STORE, "readwrite");
+          tx.objectStore(CACHE_STORE).delete(key);
+          tx.oncomplete = function () {
+            resolve(true);
+          };
+          tx.onerror = function () {
+            resolve(false);
+          };
+        });
+      })
+      .catch(function () {
+        return false;
+      });
+  }
+
+  /** Tanda tangan daftar siswa (tanpa menyimpan foto). */
+  function listSignature(list) {
+    return (list || [])
+      .map(function (s) {
+        return [
+          String(s.id || ""),
+          String(s.nis || ""),
+          String((s.fotoWajah || "").length),
+          String((s.nama || "").length),
+        ].join(":");
+      })
+      .sort()
+      .join("|");
+  }
+
+  function slimSiswa(s) {
+    return {
+      id: String(s.id || ""),
+      nis: String(s.nis || ""),
+      nisn: String(s.nisn || ""),
+      nama: String(s.nama || ""),
+      kelasId: String(s.kelasId || ""),
+      aktif: s.aktif !== false,
+    };
+  }
+
+  function saveRefsCache(signature, builtRefs) {
+    var payload = {
+      signature: signature,
+      savedAt: Date.now(),
+      items: (builtRefs || []).map(function (r) {
+        return {
+          siswa: slimSiswa(r.siswa),
+          descriptor: Array.from(r.descriptor),
+        };
+      }),
+    };
+    return idbSet(CACHE_KEY, payload).catch(function () {
+      return false;
+    });
+  }
+
+  function loadRefsCache(signature) {
+    return idbGet(CACHE_KEY)
+      .then(function (payload) {
+        if (!payload || !payload.items || !payload.items.length) return null;
+        if (payload.signature !== signature) return null;
+        if (Date.now() - (payload.savedAt || 0) > CACHE_MAX_AGE_MS) return null;
+        return payload.items
+          .map(function (item) {
+            if (!item || !item.descriptor || !item.siswa) return null;
+            return {
+              siswa: item.siswa,
+              descriptor: new Float32Array(item.descriptor),
+            };
+          })
+          .filter(Boolean);
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
+  function buildRefs(forceReload) {
     refs = [];
     setStatus("<strong>Memuat foto referensi…</strong>", "");
     return loadReferensiSiswa().then(function (list) {
@@ -261,38 +402,65 @@
         );
         return 0;
       }
-      setStatus("<strong>Memproses " + list.length + " foto…</strong>", "");
-      var ok = 0;
-      var fail = 0;
-      var chain = Promise.resolve();
-      list.forEach(function (siswa) {
-        chain = chain.then(function () {
-          return faceapi
-            .fetchImage(siswa.fotoWajah)
-            .then(function (img) {
-              return faceapi
-                .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
-                .withFaceLandmarks()
-                .withFaceDescriptor();
-            })
-            .then(function (det) {
-              if (det && det.descriptor) {
-                refs.push({ siswa: siswa, descriptor: det.descriptor });
-                ok++;
-              } else {
+
+      var signature = listSignature(list);
+
+      var cachePromise = forceReload
+        ? idbDel(CACHE_KEY).then(function () {
+            return null;
+          })
+        : loadRefsCache(signature);
+
+      return cachePromise.then(function (cached) {
+        if (cached && cached.length) {
+          refs = cached;
+          setStatus(
+            "<strong>Referensi siap:</strong> " +
+              cached.length +
+              " wajah (dari cache).",
+            "ok"
+          );
+          return cached.length;
+        }
+
+        setStatus("<strong>Memproses " + list.length + " foto…</strong>", "");
+        var ok = 0;
+        var fail = 0;
+        var chain = Promise.resolve();
+        list.forEach(function (siswa) {
+          chain = chain.then(function () {
+            return faceapi
+              .fetchImage(siswa.fotoWajah)
+              .then(function (img) {
+                return faceapi
+                  .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
+                  .withFaceLandmarks()
+                  .withFaceDescriptor();
+              })
+              .then(function (det) {
+                if (det && det.descriptor) {
+                  refs.push({ siswa: slimSiswa(siswa), descriptor: det.descriptor });
+                  ok++;
+                } else {
+                  fail++;
+                }
+              })
+              .catch(function () {
                 fail++;
-              }
-            })
-            .catch(function () {
-              fail++;
-            });
+              });
+          });
         });
-      });
-      return chain.then(function () {
-        var parts = ["<strong>Referensi siap:</strong> " + ok + " wajah."];
-        if (fail) parts.push(" " + fail + " foto gagal dibaca.");
-        setStatus(parts.join(""), ok ? "ok" : "warn");
-        return ok;
+        return chain.then(function () {
+          var parts = ["<strong>Referensi siap:</strong> " + ok + " wajah."];
+          if (fail) parts.push(" " + fail + " foto gagal dibaca.");
+          setStatus(parts.join(""), ok ? "ok" : "warn");
+          if (ok) {
+            return saveRefsCache(signature, refs).then(function () {
+              return ok;
+            });
+          }
+          return ok;
+        });
       });
     });
   }
@@ -766,7 +934,7 @@
     if (reload) {
       reload.addEventListener("click", function () {
         stopCamera();
-        buildRefs().catch(function () {
+        buildRefs(true).catch(function () {
           setStatus("<strong>Gagal memuat referensi wajah.</strong> Coba lagi.", "warn");
         });
       });
@@ -801,7 +969,12 @@
     });
   }
 
-  window.CashlessTapBelanjaFace = { init: init, reloadReferences: buildRefs };
+  window.CashlessTapBelanjaFace = {
+    init: init,
+    reloadReferences: function () {
+      return buildRefs(true);
+    },
+  };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
