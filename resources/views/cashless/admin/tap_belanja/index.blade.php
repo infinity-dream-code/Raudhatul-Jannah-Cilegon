@@ -66,6 +66,14 @@
                                            placeholder="BELANJA" name="belanja" id="belanja" aria-describedby="belanja" enterkeyhint="done" inputmode="numeric">
                                 </div>
                             </div>
+                            <div class="col mb-5">
+                                <div class="input-group">
+                                    <span class="input-group-text" style="width: 120px;">KETERANGAN</span>
+                                    <input type="text" class="form-control form-control-lg"
+                                           placeholder="Opsional, max 50 karakter"
+                                           name="keterangan" id="keterangan" maxlength="50" autocomplete="off">
+                                </div>
+                            </div>
                         </fieldset>
                     </div>
                     <div class="card-footer text-end">
@@ -98,7 +106,7 @@
                 modelUrl: @json(asset('vendor/face-api/weights')),
             };
         </script>
-        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261005c"></script>
+        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261005d"></script>
         <script defer>
             document.addEventListener('DOMContentLoaded', function () {
                 var faceTab = document.getElementById('tab-face-btn');

@@ -45,6 +45,10 @@
                     <label class="form-label" for="kantin-pay-nominal-input">Nominal (Rp)</label>
                     <input type="number" id="kantin-pay-nominal-input" class="form-control" min="100" step="100" value="1000">
                 </div>
+                <div class="mb-3">
+                    <label class="form-label" for="kantin-pay-keterangan">Keterangan</label>
+                    <input type="text" id="kantin-pay-keterangan" class="form-control" maxlength="50" placeholder="Opsional, max 50 karakter" autocomplete="off">
+                </div>
                 <p id="kantin-pay-error" class="text-danger small" hidden></p>
                 <div class="d-flex gap-2 justify-content-end">
                     <button type="button" class="btn btn-outline-secondary" id="kantin-pay-cancel">Batal</button>

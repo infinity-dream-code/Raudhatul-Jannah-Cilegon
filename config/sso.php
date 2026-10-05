@@ -25,7 +25,7 @@ return [
             ),
         ],
         'facepay_kantin' => [
-            'enabled' => (bool) env('SSO_MODULE_FACEPAY_KANTIN_ENABLED', true),
+            'enabled' => (bool) env('SSO_MODULE_FACEPAY_KANTIN_ENABLED', false),
             'label' => 'Kantin',
             'url' => env(
                 'SSO_MODULE_FACEPAY_KANTIN_URL',

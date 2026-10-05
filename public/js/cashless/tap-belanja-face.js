@@ -459,6 +459,8 @@
         nomInp.select();
       }, 80);
     }
+    var ketInp = $("kantin-pay-keterangan");
+    if (ketInp) ketInp.value = "";
     if (conf) conf.disabled = true;
     if (err) {
       err.hidden = true;
@@ -519,6 +521,7 @@
       namaSiswa: pendingPay.nama || "",
       saldoSebelum: pendingPay.saldo != null ? Number(pendingPay.saldo) : null,
       siswaId: pendingPay.siswa && pendingPay.siswa.id ? pendingPay.siswa.id : "",
+      keterangan: ($("kantin-pay-keterangan") || {}).value || "",
     })
       .then(function () {
         var wrap = $("kantin-video-wrap");

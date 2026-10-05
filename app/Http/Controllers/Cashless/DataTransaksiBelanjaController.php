@@ -83,6 +83,7 @@ class DataTransaksiBelanjaController extends Controller
             ['data' => 'NMCUST', 'name' => 'NAMA', 'searchable' => true, 'orderable' => true, 'exportable' => true],
             ['data' => 'TanggalKeluar', 'name' => 'TANGGAL', 'searchable' => true, 'orderable' => true, 'exportable' => true, "columnType" => "timestamp"],
             ['data' => 'BILLAM', 'name' => 'DEBET', 'searchable' => true, 'orderable' => true, 'exportable' => true, "columnType" => "currency"],
+            ['data' => 'KETERANGAN', 'name' => 'KETERANGAN', 'searchable' => true, 'orderable' => true, 'exportable' => true],
             ['data' => 'Teller', 'name' => 'MERCHANT', 'searchable' => true, 'orderable' => true, 'exportable' => true],
             ['data' => 'CODE02', 'name' => 'UNIT', 'searchable' => true, 'orderable' => true, 'exportable' => true],
             ['data' => 'DESC02', 'name' => 'KELAS', 'searchable' => true, 'orderable' => true, 'exportable' => true],
@@ -202,6 +203,7 @@ class DataTransaksiBelanjaController extends Controller
             'scctcust.NMCUST as NAMA',
             'scctcashout.TanggalKeluar as TANGGAL',
             'scctcashout.BILLAM as DEBET',
+            'scctcashout.KETERANGAN as KETERANGAN',
             'scctcashout.Teller as MERCHANT',
             'scctcust.CODE02 as UNIT',
             'scctcust.DESC02 as KELAS',
@@ -230,7 +232,7 @@ class DataTransaksiBelanjaController extends Controller
 
             fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-            fputcsv($file, ['No', 'NIS', 'NAMA', 'TANGGAL', 'DEBET', 'MERCHANT', 'UNIT', 'KELAS', 'KELOMPOK'], ';');
+            fputcsv($file, ['No', 'NIS', 'NAMA', 'TANGGAL', 'DEBET', 'KETERANGAN', 'MERCHANT', 'UNIT', 'KELAS', 'KELOMPOK'], ';');
 
             $no = 1;
             foreach ($data as $row) {
@@ -244,6 +246,7 @@ class DataTransaksiBelanjaController extends Controller
                     $row->NAMA,
                     $tanggal,
                     $row->DEBET,
+                    $row->KETERANGAN ?? '',
                     $row->MERCHANT,
                     $row->UNIT,
                     $row->KELAS,
@@ -259,6 +262,7 @@ class DataTransaksiBelanjaController extends Controller
                 'TOTAL PEMBAYARAN',
                 '',
                 $totalAmount,
+                '',
                 '',
                 '',
                 '',
@@ -323,6 +327,7 @@ class DataTransaksiBelanjaController extends Controller
             'scctcashout.BILLAM',
             'scctcashout.TanggalKeluar',
             'scctcashout.Teller',
+            'scctcashout.KETERANGAN',
         ]);
 
         $query = $this->baseQuery($filterQuery)

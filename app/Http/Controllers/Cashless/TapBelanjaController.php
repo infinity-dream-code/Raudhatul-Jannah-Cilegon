@@ -112,6 +112,7 @@ class TapBelanjaController extends Controller
                 'saldoSebelum' => ['nullable', 'numeric'],
                 'namaSiswa' => ['nullable', 'string'],
                 'siswaId' => ['nullable', 'string'],
+                'keterangan' => ['nullable', 'string', 'max:50'],
             ],
             ValidationMessage::messages(),
             ValidationMessage::attributes(),
@@ -140,6 +141,7 @@ class TapBelanjaController extends Controller
         $fakeRequest = new Request([
             'tap_id' => $resolved['tap_id'],
             'belanja' => number_format($nominal, 0, '', '.'),
+            'keterangan' => (string) $request->input('keterangan', ''),
         ]);
         $fakeRequest->setLaravelSession($request->session());
         $response = $this->payment($fakeRequest);
@@ -310,6 +312,7 @@ class TapBelanjaController extends Controller
             [
                 'tap_id' => ['required', 'string'],
                 'belanja' => ['required', 'regex:/^[0-9]+(\.[0-9]{3})*$/', 'not_in:0'],
+                'keterangan' => ['nullable', 'string', 'max:50'],
             ],
             ValidationMessage::messages(),
             ValidationMessage::attributes(),
@@ -353,9 +356,19 @@ class TapBelanjaController extends Controller
                         'nama' => $parts[1] ?? null,
                         'sisa_saldo' => $parts[2] ?? null,
                     ];
+                    $this->applyKeterangan(
+                        (string) $request->tap_id,
+                        (string) $request->input('keterangan', '')
+                    );
                 }
             } else {
                 $statusKey = strtolower($result);
+                if ($statusKey === 'ok') {
+                    $this->applyKeterangan(
+                        (string) $request->tap_id,
+                        (string) $request->input('keterangan', '')
+                    );
+                }
             }
 
             $config = self::STATUS_MAP[$statusKey] ?? [
@@ -424,5 +437,51 @@ class TapBelanjaController extends Controller
         $clean = preg_replace('/[^\d]/', '', (string) $raw);
 
         return max(0, (int) $clean);
+    }
+
+    /**
+     * Simpan keterangan ke baris scctcashout terbaru setelah WebPaymentBUY sukses.
+     */
+    private function applyKeterangan(string $tapId, string $keterangan): void
+    {
+        $keterangan = mb_substr(trim($keterangan), 0, 50);
+        if ($keterangan === '') {
+            return;
+        }
+
+        $teller = trim((string) session('cashless_user.username', ''));
+        if ($teller === '' || $tapId === '') {
+            return;
+        }
+
+        try {
+            $custId = DB::connection('DATA_MYSQL')
+                ->table('sm_pin')
+                ->where('PID', $tapId)
+                ->value('CUSTID');
+
+            if (!$custId) {
+                return;
+            }
+
+            $urut = DB::connection('DATA_MYSQL')
+                ->table('scctcashout')
+                ->where('CUSTID', $custId)
+                ->whereRaw('TRIM(Teller) = ?', [$teller])
+                ->whereRaw('UPPER(TRIM(FIDBANK)) = ?', ['BUY'])
+                ->orderByDesc('urut')
+                ->value('urut');
+
+            if (!$urut) {
+                return;
+            }
+
+            DB::connection('DATA_MYSQL')
+                ->table('scctcashout')
+                ->where('urut', $urut)
+                ->update(['KETERANGAN' => $keterangan]);
+        } catch (\Throwable $e) {
+            Log::warning('applyKeterangan failed', ['message' => $e->getMessage()]);
+        }
     }
 }
