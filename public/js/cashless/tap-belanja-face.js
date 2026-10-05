@@ -486,7 +486,7 @@
         if (saldoEl) saldoEl.textContent = "Gagal";
         if (err) {
           err.hidden = false;
-          err.textContent = (e && e.message) || "Gagal inquiry saldo";
+          err.textContent = "Gagal cek saldo. Coba lagi.";
         }
         if (conf) conf.disabled = true;
       });
@@ -667,11 +667,7 @@
         );
       })
       .catch(function (err) {
-        setStatus(
-          "<strong>Gagal ganti kamera.</strong> " +
-            escapeHtml((err && err.message) || String(err)),
-          "warn"
-        );
+        setStatus("<strong>Gagal ganti kamera.</strong> Coba lagi.", "warn");
       });
   }
 
@@ -698,10 +694,7 @@
         syncFlipLabel();
       })
       .catch(function (err) {
-        setStatus(
-          "<strong>Kamera gagal.</strong> " + escapeHtml((err && err.message) || String(err)),
-          "warn"
-        );
+        setStatus("<strong>Kamera gagal.</strong> Izinkan akses kamera lalu coba lagi.", "warn");
         throw err;
       });
   }
@@ -770,8 +763,8 @@
     if (reload) {
       reload.addEventListener("click", function () {
         stopCamera();
-        buildRefs().catch(function (err) {
-          setStatus(escapeHtml((err && err.message) || String(err)), "warn");
+        buildRefs().catch(function () {
+          setStatus("<strong>Gagal memuat referensi wajah.</strong> Coba lagi.", "warn");
         });
       });
     }
@@ -801,7 +794,7 @@
     }
     bindUi();
     loadModels().catch(function (err) {
-      setStatus("<strong>Gagal memuat model.</strong> " + escapeHtml((err && err.message) || err), "warn");
+      setStatus("<strong>Gagal memuat model wajah.</strong> Muat ulang halaman.", "warn");
     });
   }
 

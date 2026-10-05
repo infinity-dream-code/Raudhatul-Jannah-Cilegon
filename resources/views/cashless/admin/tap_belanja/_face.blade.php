@@ -1,24 +1,7 @@
 <div class="cashless-face-wrap kantin-app">
     @unless($faceDbReady ?? false)
-        @php $st = $faceDbStatus ?? []; @endphp
         <div class="alert alert-warning">
-            <strong>Database FacePay belum terhubung.</strong>
-            Tab wajah membutuhkan DB FacePay (tabel <code>siswa.foto_wajah</code>).
-            <ul class="mb-0 mt-2 small">
-                <li>Host: <code>{{ $st['host'] ?? '-' }}</code></li>
-                <li>Database: <code>{{ $st['database'] ?? '-' }}</code></li>
-                <li>User: <code>{{ $st['username'] ?? '-' }}</code></li>
-                @if(!empty($st['error']))
-                    <li class="text-danger">Error: {{ $st['error'] }}</li>
-                @endif
-            </ul>
-            <p class="mb-0 mt-2 small">
-                Face DB (tabel <code>siswa</code>) ada di server FacePay, contoh:
-                <code>FACE_DB_HOST=101.50.2.56</code>,
-                <code>FACE_DB_DATABASE=cilegon_raudhatul_jannah</code>,
-                <code>FACE_DB_USERNAME=root</code>.
-                Bukan host SIKEU (<code>10.99.23.26</code>). MySQL di server Face harus izinkan akses remote dari server SIKEU.
-            </p>
+            Layanan FacePay sementara tidak tersedia. Hubungi admin ICT.
         </div>
     @endunless
 

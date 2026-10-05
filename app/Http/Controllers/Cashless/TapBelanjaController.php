@@ -28,7 +28,6 @@ class TapBelanjaController extends Controller
         return view('cashless.admin.tap_belanja.index', [
             'title' => $this->title,
             'faceDbReady' => $faceStatus['ok'],
-            'faceDbStatus' => $faceStatus,
         ]);
     }
 
@@ -38,12 +37,7 @@ class TapBelanjaController extends Controller
         if (!$faceStatus['ok']) {
             return response()->json([
                 'ok' => false,
-                'error' => 'Database FacePay belum terhubung: ' . ($faceStatus['error'] ?? 'unknown'),
-                'meta' => [
-                    'host' => $faceStatus['host'],
-                    'database' => $faceStatus['database'],
-                    'username' => $faceStatus['username'],
-                ],
+                'error' => 'Layanan FacePay sementara tidak tersedia. Hubungi admin ICT.',
             ], 502);
         }
 
@@ -236,8 +230,7 @@ class TapBelanjaController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'gagal mendapatkan data saldo, silahkan coba lagi',
-                'error' => $e->getMessage(),
+                'message' => 'Gagal mendapatkan data saldo, silahkan coba lagi',
             ], 422);
         }
     }
@@ -382,8 +375,7 @@ class TapBelanjaController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'gagal mendapatkan data saldo, silahkan coba lagi',
-                'error' => $e->getMessage(),
+                'message' => 'Gagal memproses transaksi, silahkan coba lagi',
             ], 422);
         }
     }

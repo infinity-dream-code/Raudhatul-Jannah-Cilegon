@@ -98,7 +98,7 @@
                 modelUrl: @json(asset('vendor/face-api/weights')),
             };
         </script>
-        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261005b"></script>
+        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261005c"></script>
         <script defer>
             document.addEventListener('DOMContentLoaded', function () {
                 var faceTab = document.getElementById('tab-face-btn');

@@ -3,6 +3,7 @@
 namespace App\Support\FacePay;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class FaceStudentRepository
@@ -50,31 +51,23 @@ class FaceStudentRepository
     }
 
     /**
-     * @return array{ok: bool, error: string|null, host: string, database: string, username: string}
+     * @return array{ok: bool}
      */
     public function pingStatus(): array
     {
         $conn = $this->connectionName();
-        $cfg = config("database.connections.{$conn}", []);
-        $meta = [
-            'ok' => false,
-            'error' => null,
-            'host' => (string) ($cfg['host'] ?? ''),
-            'database' => (string) ($cfg['database'] ?? ''),
-            'username' => (string) ($cfg['username'] ?? ''),
-        ];
 
         try {
             DB::connection($conn)->select('SELECT 1 AS ok');
-            // Pastikan tabel referensi wajah ada.
             DB::connection($conn)->table('siswa')->limit(1)->get(['id']);
-            $meta['ok'] = true;
 
-            return $meta;
+            return ['ok' => true];
         } catch (Throwable $e) {
-            $meta['error'] = $e->getMessage();
+            Log::warning('FacePay DB unavailable', [
+                'message' => $e->getMessage(),
+            ]);
 
-            return $meta;
+            return ['ok' => false];
         }
     }
 }
