@@ -311,8 +311,11 @@ Route::prefix('cashless')->name('cashless.')->group(function () {
 
             Route::prefix('tap-belanja')->name('tap-belanja.')->group(function () {
                 Route::get('/', [\App\Http\Controllers\Cashless\TapBelanjaController::class, 'index'])->name('index');
+                Route::get('/face-references', [\App\Http\Controllers\Cashless\TapBelanjaController::class, 'faceReferences'])->name('face-references');
                 Route::post('/get-saldo', [\App\Http\Controllers\Cashless\TapBelanjaController::class, 'getSaldo'])->name('get-saldo');
+                Route::post('/get-saldo-nis', [\App\Http\Controllers\Cashless\TapBelanjaController::class, 'getSaldoByNis'])->name('get-saldo-nis');
                 Route::post('/payment', [\App\Http\Controllers\Cashless\TapBelanjaController::class, 'payment'])->name('payment');
+                Route::post('/payment-nis', [\App\Http\Controllers\Cashless\TapBelanjaController::class, 'paymentByNis'])->name('payment-nis');
             });
 
             Route::prefix('cek-limit')->name('cek-limit.')->group(function () {

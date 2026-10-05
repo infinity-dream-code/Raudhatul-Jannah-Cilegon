@@ -2,19 +2,36 @@
 @section('title',$dataTitle??$mainTitle??$title??'Dashboard')
 @section('style')
     <link rel="stylesheet" href="{{asset('main/libs/apex-charts/apex-charts.css')}}"/>
-
+    <link rel="stylesheet" href="{{ asset('css/cashless-face-pay.css') }}?v=1"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.css"/>
+    <style>
+        .cashless-face-wrap .k-modal { position: fixed; inset: 0; z-index: 1090; display: flex; align-items: center; justify-content: center; }
+        .cashless-face-wrap .k-modal[hidden] { display: none !important; }
+        .cashless-face-wrap .k-modal__backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); }
+        .cashless-face-wrap .k-modal__dialog { position: relative; z-index: 1; max-width: 480px; width: calc(100% - 2rem); }
+        .cashless-face-wrap .k-stage { position: relative; }
+        .cashless-face-wrap .k-stage__overlay { position: absolute; inset: 0; pointer-events: none; }
+        .cashless-face-wrap .k-target { position: absolute; border: 2px solid #22c55e; border-radius: 8px; box-sizing: border-box; }
+    </style>
 @endsection
 
 @section('content')
-    <div class="d-flex justify-content-center align-items-center" style="height: 80vh !important;">
-        <div class="w-100 m-auto">
-            <h3 class="page-heading d-flex text-gray-900 fw-bold flex-column justify-content-center my-0">
-                @if(isset($dataTitle) && isset($mainTitle) && $mainTitle != $dataTitle)
-                    {{$mainTitle .' - '.$dataTitle}}
-                @else
-                    {{$mainTitle??$title??''}}
-                @endif
-            </h3>
+    <div class="container-xxl py-4">
+        <h3 class="page-heading fw-bold mb-3">{{ $mainTitle ?? $title ?? 'Tap Belanja' }}</h3>
+
+        <ul class="nav nav-pills mb-4" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="tab-rfid-btn" data-bs-toggle="pill" data-bs-target="#tab-rfid" type="button" role="tab">RFID / Tap kartu</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="tab-face-btn" data-bs-toggle="pill" data-bs-target="#tab-face" type="button" role="tab">Wajah (FacePay)</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="tab-rfid" role="tabpanel">
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+        <div class="w-100 m-auto" style="max-width: 640px;">
             <form id="form-data">
                 <div class="card">
                     <div class="card-body">
@@ -58,9 +75,44 @@
             </form>
         </div>
     </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-face" role="tabpanel">
+                @include('cashless.admin.tap_belanja._face')
+            </div>
+        </div>
+    </div>
 @endsection
 @section('errorInputHelper', true)
 @section('script')
+    @if($faceDbReady ?? false)
+        <script src="https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+        <script src="{{ asset('js/cashless/presensi-camera.js') }}?v=1"></script>
+        <script>
+            window.TAP_BELANJA_FACE = {
+                referencesUrl: @json(route('cashless.admin.tap-belanja.face-references')),
+                saldoUrl: @json(route('cashless.admin.tap-belanja.get-saldo-nis')),
+                paymentUrl: @json(route('cashless.admin.tap-belanja.payment-nis')),
+                csrf: @json(csrf_token()),
+            };
+        </script>
+        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261005"></script>
+        <script defer>
+            document.addEventListener('DOMContentLoaded', function () {
+                var faceTab = document.getElementById('tab-face-btn');
+                var started = false;
+                function bootFace() {
+                    if (started || !window.CashlessTapBelanjaFace) return;
+                    started = true;
+                    window.CashlessTapBelanjaFace.init();
+                }
+                if (faceTab) {
+                    faceTab.addEventListener('shown.bs.tab', bootFace);
+                }
+            });
+        </script>
+    @endif
     <script type="text/javascript" defer>
         document.addEventListener("DOMContentLoaded", function () {
             function formatRupiah(amount) {

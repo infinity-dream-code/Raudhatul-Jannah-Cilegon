@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Cashless;
 
 use App\Http\Controllers\Controller;
 use App\Models\ValidationMessage;
+use App\Support\FacePay\FaceKantinBelanjaLog;
+use App\Support\FacePay\FaceStudentRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,14 +18,159 @@ class TapBelanjaController extends Controller
 
     public function __construct()
     {
-        $this->title = 'TAP KARTU';
+        $this->title = 'Tap Belanja';
     }
 
-    public function index()
+    public function index(FaceStudentRepository $faceRepo)
     {
         return view('cashless.admin.tap_belanja.index', [
             'title' => $this->title,
+            'faceDbReady' => $faceRepo->ping(),
         ]);
+    }
+
+    public function faceReferences(FaceStudentRepository $faceRepo): JsonResponse
+    {
+        if (!$faceRepo->ping()) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Database FacePay belum terhubung. Periksa FACE_DB_* di .env',
+            ], 502);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => $faceRepo->listWithFoto(),
+        ]);
+    }
+
+    public function getSaldoByNis(Request $request): JsonResponse
+    {
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'nis' => ['required', 'string'],
+                'siswaId' => ['nullable', 'string'],
+            ],
+            ValidationMessage::messages(),
+            ValidationMessage::attributes(),
+        );
+
+        if ($validator->fails()) {
+            return response()->json([
+                'ok' => false,
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $nis = preg_replace('/\D/', '', (string) $request->input('nis'));
+        if ($nis === '') {
+            return response()->json(['ok' => false, 'error' => 'NIS tidak valid'], 422);
+        }
+
+        try {
+            $resolved = $this->resolveSiswaByNis($nis);
+            if (!$resolved) {
+                return response()->json(['ok' => false, 'error' => 'Siswa / kartu tidak ditemukan di cashless'], 422);
+            }
+
+            $nama = $resolved['nama'];
+            $saldo = $this->resolveSaldo($resolved['tap_id'], $resolved['cust_id'], $nama);
+
+            return response()->json([
+                'ok' => true,
+                'data' => [
+                    'nokartu' => $nis,
+                    'tap_id' => $resolved['tap_id'],
+                    'nama' => $nama,
+                    'saldo' => $saldo,
+                    'siswaId' => (string) $request->input('siswaId', ''),
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('getSaldoByNis', ['nis' => $nis, 'error' => $e->getMessage()]);
+
+            return response()->json([
+                'ok' => false,
+                'error' => 'Gagal inquiry saldo',
+            ], 422);
+        }
+    }
+
+    public function paymentByNis(Request $request, FaceKantinBelanjaLog $faceLog): JsonResponse
+    {
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'nis' => ['required', 'string'],
+                'nominal' => ['nullable'],
+                'belanja' => ['nullable'],
+                'saldoSebelum' => ['nullable', 'numeric'],
+                'namaSiswa' => ['nullable', 'string'],
+                'siswaId' => ['nullable', 'string'],
+            ],
+            ValidationMessage::messages(),
+            ValidationMessage::attributes(),
+        );
+
+        if ($validator->fails()) {
+            return response()->json([
+                'ok' => false,
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $nis = preg_replace('/\D/', '', (string) $request->input('nis'));
+        $nominal = $this->parseNominal($request->input('nominal') ?? $request->input('belanja'));
+        if ($nis === '' || $nominal <= 0) {
+            return response()->json(['ok' => false, 'error' => 'NIS atau nominal tidak valid'], 422);
+        }
+
+        $resolved = $this->resolveSiswaByNis($nis);
+        if (!$resolved) {
+            return response()->json(['ok' => false, 'error' => 'Siswa / kartu tidak ditemukan'], 422);
+        }
+
+        $saldoSebelum = $request->has('saldoSebelum') ? (int) $request->input('saldoSebelum') : null;
+        $fakeRequest = new Request([
+            'tap_id' => $resolved['tap_id'],
+            'belanja' => number_format($nominal, 0, '', '.'),
+        ]);
+        $fakeRequest->setLaravelSession($request->session());
+        $response = $this->payment($fakeRequest);
+        $payload = $response->getData(true);
+
+        if (($payload['code'] ?? null) === 1000) {
+            $kantinUser = session('cashless_user', []);
+            $faceLog->save([
+                'siswaId' => (string) $request->input('siswaId', ''),
+                'nis' => $nis,
+                'namaSiswa' => (string) ($payload['data']['nama'] ?? $request->input('namaSiswa') ?? $resolved['nama']),
+                'nominal' => $nominal,
+                'saldoSebelum' => $saldoSebelum,
+                'saldoSesudah' => isset($payload['data']['sisa_saldo']) ? (int) $payload['data']['sisa_saldo'] : null,
+                'namaKantin' => (string) ($kantinUser['username'] ?? ''),
+                'displayNameKantin' => (string) ($kantinUser['kantin'] ?? $kantinUser['username'] ?? ''),
+                'metode' => 'facepay_cashless',
+                'merchantStatus' => (string) ($payload['status'] ?? 'ok'),
+                'merchantRaw' => $payload,
+            ]);
+
+            return response()->json([
+                'ok' => true,
+                'data' => $payload['data'] ?? [],
+                'message' => $payload['message'] ?? 'Transaksi berhasil',
+                'code' => $payload['code'] ?? 1000,
+            ]);
+        }
+
+        return response()->json([
+            'ok' => false,
+            'error' => $payload['message'] ?? 'Pembayaran gagal',
+            'code' => $payload['code'] ?? 9999,
+        ], 422);
     }
 
     public function getSaldo(Request $request)
@@ -229,5 +377,51 @@ class TapBelanjaController extends Controller
                 'error' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    /**
+     * @return array{tap_id: string, cust_id: string, nama: string}|null
+     */
+    private function resolveSiswaByNis(string $nis): ?array
+    {
+        $nis = trim($nis);
+        if ($nis === '') {
+            return null;
+        }
+
+        $siswa = DB::connection('DATA_MYSQL')
+            ->table('scctcust')
+            ->join('sm_pin', 'sm_pin.CUSTID', '=', 'scctcust.CUSTID')
+            ->select(['scctcust.CUSTID', 'scctcust.nmcust', 'scctcust.nocust', 'sm_pin.PID'])
+            ->where(function ($q) use ($nis) {
+                $q->where('scctcust.NOCUST', $nis)
+                    ->orWhereRaw('TRIM(scctcust.NOCUST) = ?', [$nis]);
+            })
+            ->first();
+
+        if (!$siswa || blank($siswa->PID ?? null)) {
+            return null;
+        }
+
+        return [
+            'tap_id' => trim((string) $siswa->PID),
+            'cust_id' => trim((string) $siswa->CUSTID),
+            'nama' => trim((string) ($siswa->nmcust ?? '')),
+        ];
+    }
+
+    private function parseNominal(mixed $raw): int
+    {
+        if ($raw === null || $raw === '') {
+            return 0;
+        }
+
+        if (is_numeric($raw)) {
+            return max(0, (int) $raw);
+        }
+
+        $clean = preg_replace('/[^\d]/', '', (string) $raw);
+
+        return max(0, (int) $clean);
     }
 }

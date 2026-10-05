@@ -83,6 +83,21 @@ return [
                 ])
                 : [],
         ],
+
+        'FACE_MYSQL' => [
+            'driver' => 'mysql',
+            'host' => env('FACE_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('FACE_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('FACE_DB_DATABASE', 'cilegon_raudhatul_jannah'),
+            'username' => env('FACE_DB_USERNAME', 'cilegon_raudhatul_jannah'),
+            'password' => env('FACE_DB_PASSWORD', 'cilegon_raudhatul_jannah'),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => false,
+            'engine' => null,
+        ],
     ],
 
     /*
