@@ -335,7 +335,7 @@ class TapBelanjaController extends Controller
 
             $result = DB::connection('DATA_MYSQL')
                 ->select(
-                    'SELECT WebPaymentBUY(?,?,?) AS result',
+                    'SELECT VPSPaymentBUY(?,?,?) AS result',
                     [
                         $request->tap_id,
                         $nominal,
@@ -440,7 +440,7 @@ class TapBelanjaController extends Controller
     }
 
     /**
-     * Simpan keterangan ke baris scctcashout terbaru setelah WebPaymentBUY sukses.
+     * Simpan keterangan ke baris scctcashout terbaru setelah VPSPaymentBUY sukses.
      */
     private function applyKeterangan(string $tapId, string $keterangan): void
     {
