@@ -23,18 +23,27 @@ class TapBelanjaController extends Controller
 
     public function index(FaceStudentRepository $faceRepo)
     {
+        $faceStatus = $faceRepo->pingStatus();
+
         return view('cashless.admin.tap_belanja.index', [
             'title' => $this->title,
-            'faceDbReady' => $faceRepo->ping(),
+            'faceDbReady' => $faceStatus['ok'],
+            'faceDbStatus' => $faceStatus,
         ]);
     }
 
     public function faceReferences(FaceStudentRepository $faceRepo): JsonResponse
     {
-        if (!$faceRepo->ping()) {
+        $faceStatus = $faceRepo->pingStatus();
+        if (!$faceStatus['ok']) {
             return response()->json([
                 'ok' => false,
-                'error' => 'Database FacePay belum terhubung. Periksa FACE_DB_* di .env',
+                'error' => 'Database FacePay belum terhubung: ' . ($faceStatus['error'] ?? 'unknown'),
+                'meta' => [
+                    'host' => $faceStatus['host'],
+                    'database' => $faceStatus['database'],
+                    'username' => $faceStatus['username'],
+                ],
             ], 502);
         }
 
