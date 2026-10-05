@@ -13,11 +13,11 @@
                 @endif
             </ul>
             <p class="mb-0 mt-2 small">
-                Di server SIKEU, samakan kredensial dengan MySQL yang dipakai SIKEU, misalnya:
-                <code>FACE_DB_HOST=10.99.23.26</code>,
-                <code>FACE_DB_USERNAME=root</code>,
-                <code>FACE_DB_PASSWORD=…</code>
-                — pastikan DB <code>cilegon_raudhatul_jannah</code> ada di host itu.
+                Face DB (tabel <code>siswa</code>) ada di server FacePay, contoh:
+                <code>FACE_DB_HOST=101.50.2.56</code>,
+                <code>FACE_DB_DATABASE=cilegon_raudhatul_jannah</code>,
+                <code>FACE_DB_USERNAME=root</code>.
+                Bukan host SIKEU (<code>10.99.23.26</code>). MySQL di server Face harus izinkan akses remote dari server SIKEU.
             </p>
         </div>
     @endunless

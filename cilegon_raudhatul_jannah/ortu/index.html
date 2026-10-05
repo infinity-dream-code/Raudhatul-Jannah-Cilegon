@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f5f1" />
+    <link rel="icon" href="../logo/logo.jpeg" type="image/jpeg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="description" content="Masuk Portal Ortu — Facepay Cilegon Raudhatul Jannah" />
+    <title>Masuk — Portal Ortu Facepay Cilegon Raudhatul Jannah</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/ortu.css" />
+  </head>
+  <body class="ortu-app" data-ortu-page="login">
+    <div class="ortu-app__frame">
+      <header class="ortu-header">
+        <div class="ortu-header__brand">
+          <img class="ortu-header__logo" src="../logo/logo.jpeg" alt="" width="38" height="38" />
+          <div class="ortu-header__title">
+            <span>Facepay Cilegon Raudhatul Jannah</span>
+            <span class="ortu-header__sub">Portal Orang Tua</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="ortu-main">
+        <section class="ortu-login-hero">
+          <div class="ortu-login-hero__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <h1>Selamat Datang</h1>
+          <p>Masuk dengan NIS siswa untuk rekam foto wajah presensi &amp; kantin.</p>
+        </section>
+
+        <div class="ortu-card ortu-card--loading-host" id="ortu-login-card">
+          <p id="ortu-login-error" class="ortu-alert" role="alert" hidden></p>
+          <form id="ortu-login-form" novalidate autocomplete="off">
+            <div class="ortu-field">
+              <label for="ortu-nis">Nomor Induk Siswa (NIS)</label>
+              <input
+                id="ortu-nis"
+                name="nis"
+                type="text"
+                inputmode="numeric"
+                autocomplete="username"
+                placeholder="Contoh: 220007"
+                required
+              />
+              <p class="ortu-field__hint">Nomor induk siswa yang terdaftar di sekolah.</p>
+            </div>
+            <button type="submit" class="ortu-btn ortu-btn--primary" id="ortu-login-submit">
+              Masuk
+            </button>
+          </form>
+        </div>
+
+        <p class="ortu-footer-note">Butuh bantuan? Hubungi admin sekolah.</p>
+      </main>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="../admin/js/loading.js"></script>
+    <script src="js/ortu-app.js"></script>
+    <script src="js/ortu-rekam.js" defer></script>
+  </body>
+</html>

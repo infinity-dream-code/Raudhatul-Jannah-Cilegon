@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f1a15" />
+    <meta name="description" content="Masuk panel admin Facepay Cilegon Raudhatul Jannah" />
+    <title>Masuk Admin — Facepay Cilegon Raudhatul Jannah</title>
+    <meta http-equiv="refresh" content="0; url=index.html" />
+    <script>location.replace("index.html");</script>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="../logo/logo.jpeg" type="image/jpeg" />
+    <link rel="apple-touch-icon" href="../logo/logo.jpeg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body data-app-root="" data-admin-login="1" class="admin-login-page">
+    <main class="admin-login">
+      <section class="admin-login__card module-shell">
+        <div class="admin-login__brand">
+          <img class="admin-login__logo" src="../logo/logo.jpeg" alt="Logo Raudhatul Jannah" width="48" height="48" />
+          <div>
+            <h1 class="admin-login__title">Panel Admin</h1>
+            <p class="admin-login__subtitle">Facepay Cilegon Raudhatul Jannah</p>
+          </div>
+        </div>
+
+        <p id="admin-login-error" class="admin-login__error" role="alert" hidden></p>
+
+        <form id="admin-login-form" class="settings-form" novalidate>
+          <div class="settings-form__field">
+            <label class="settings-form__label" for="admin-username">Username</label>
+            <input
+              id="admin-username"
+              name="username"
+              type="text"
+              class="settings-form__input"
+              autocomplete="username"
+              placeholder="admin"
+              required
+            />
+          </div>
+          <div class="settings-form__field">
+            <label class="settings-form__label" for="admin-password">Kata sandi</label>
+            <input
+              id="admin-password"
+              name="password"
+              type="password"
+              class="settings-form__input"
+              autocomplete="current-password"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn--primary admin-login__submit" id="admin-login-submit">
+            Masuk
+          </button>
+        </form>
+
+        <p class="admin-login__hint">Login memakai akun tabel admin (bukan API kantin).</p>
+        <p class="admin-login__hint">
+          <a href="../kantin/login.html">Masuk sebagai Kantin →</a>
+          ·
+          <a href="../index.html">Portal</a>
+        </p>
+      </section>
+    </main>
+
+    <script src="api/config.js"></script>
+    <script src="api/http.js"></script>
+    <script src="js/admin-auth.js"></script>
+  </body>
+</html>

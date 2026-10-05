@@ -1,0 +1,72 @@
+/**
+ * Cilegon Raudhatul Jannah — Design System (Hijau)
+ * Salinan mandiri untuk paket dashboard-ortu-copy.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+:root {
+  --hanif-green-900: #0b4d3a;
+  --hanif-green-800: #0f6b4f;
+  --hanif-green-700: #14855f;
+  --hanif-green-600: #1a9e6e;
+  --hanif-green-500: #22b573;
+  --hanif-green-400: #3ecf8e;
+  --hanif-green-100: #e8f8f0;
+  --hanif-green-50: #f4fbf7;
+
+  --hanif-gold-700: #b8860b;
+  --hanif-gold-600: #d4a017;
+  --hanif-gold-500: #e8b923;
+  --hanif-gold-400: #f5d04a;
+  --hanif-gold-100: #fef9e7;
+  --hanif-gold-50: #fffdf5;
+
+  --primary: var(--hanif-green-700);
+  --primary-dark: var(--hanif-green-900);
+  --primary-light: var(--hanif-green-500);
+  --accent: var(--hanif-gold-500);
+  --accent-dark: var(--hanif-gold-700);
+  --accent-light: var(--hanif-gold-400);
+
+  --bg: var(--hanif-green-50);
+  --bg-alt: #ffffff;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --card: #ffffff;
+  --text: #0f2922;
+  --text-muted: #5a7a6e;
+  --border: #c5e6d4;
+  --border-strong: #9fd4b8;
+
+  --success: #16a34a;
+  --warning: var(--hanif-gold-600);
+  --danger: #dc3545;
+  --info: #0ea5e9;
+
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --shadow-sm: 0 2px 8px rgba(11, 77, 58, 0.06);
+  --shadow: 0 8px 32px rgba(11, 77, 58, 0.1);
+  --shadow-lg: 0 16px 48px rgba(11, 77, 58, 0.14);
+  --font: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --transition: 0.2s ease;
+}
+
+[data-theme="dark"],
+.theme-dark {
+  --bg: #0a1410;
+  --bg-alt: #0f1a15;
+  --surface: #122820;
+  --surface-elevated: #1a3529;
+  --card: #152e24;
+  --text: #eef8f2;
+  --text-muted: #8fb39f;
+  --border: #2a4d3d;
+  --border-strong: #3d6b55;
+  --primary: var(--hanif-green-400);
+  --primary-dark: var(--hanif-green-600);
+  --primary-light: var(--hanif-green-500);
+  --accent: var(--hanif-gold-400);
+}
