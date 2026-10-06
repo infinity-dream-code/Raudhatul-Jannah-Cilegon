@@ -289,6 +289,10 @@ class TapBelanjaController extends Controller
             'code' => 2001,
             'message' => 'Saldo tidak cukup',
         ],
+        'debt_limit_exceeded' => [
+            'code' => 2004,
+            'message' => 'Batas utang sudah tercapai',
+        ],
         'unknown_or_blocked_card' => [
             'code' => 2002,
             'message' => 'Kartu Terblokir',

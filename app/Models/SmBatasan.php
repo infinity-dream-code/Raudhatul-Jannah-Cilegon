@@ -18,6 +18,7 @@ class SmBatasan extends Model
         'periode',
         'batas_belanja_hari',
         'batas_cash',
+        'batasan_utang',
         'aktif',
         'kelompok_kantin',
     ];
@@ -25,6 +26,7 @@ class SmBatasan extends Model
     protected $casts = [
         'batas_belanja_hari' => 'float',
         'batas_cash' => 'float',
+        'batasan_utang' => 'float',
         'aktif' => 'integer',
     ];
 }

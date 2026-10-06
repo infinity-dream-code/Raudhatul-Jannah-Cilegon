@@ -120,6 +120,7 @@ class SettingBatasanController extends Controller
                 'periode' => ['required', 'string', 'max:50'],
                 'batas_belanja_hari' => ['required', 'numeric', 'min:0'],
                 'batas_cash' => ['required', 'numeric', 'min:0'],
+                'batasan_utang' => ['required', 'numeric', 'min:0'],
                 'aktif' => ['required', 'in:0,1'],
                 'kelompok_kantin' => ['nullable', 'string', 'max:100'],
             ],
@@ -128,6 +129,7 @@ class SettingBatasanController extends Controller
                 'periode' => 'Periode',
                 'batas_belanja_hari' => 'Batas Belanja Hari',
                 'batas_cash' => 'Batas Cash',
+                'batasan_utang' => 'Batas Utang',
                 'aktif' => 'Status Aktif',
                 'kelompok_kantin' => 'Kelompok Kantin',
             ],
@@ -140,6 +142,7 @@ class SettingBatasanController extends Controller
             'periode' => trim((string) $request->input('periode')),
             'batas_belanja_hari' => (float) $request->input('batas_belanja_hari'),
             'batas_cash' => (float) $request->input('batas_cash'),
+            'batasan_utang' => (float) $request->input('batasan_utang', 0),
             'aktif' => (int) $request->input('aktif'),
             'kelompok_kantin' => trim((string) $request->input('kelompok_kantin', '')) ?: null,
         ];

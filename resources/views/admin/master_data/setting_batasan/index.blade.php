@@ -71,6 +71,7 @@
                     <th>Periode</th>
                     <th class="text-end">Batas Belanja/Hari</th>
                     <th class="text-end">Batas Cash</th>
+                    <th class="text-end">Batas Utang</th>
                     <th>Kelompok Kantin</th>
                     <th class="text-center">Status</th>
                     <th class="text-center" style="width:120px;">Aksi</th>
@@ -83,6 +84,7 @@
                         <td>{{ $item->periode ?: '-' }}</td>
                         <td class="text-end">{{ number_format((float) $item->batas_belanja_hari, 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format((float) $item->batas_cash, 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format((float) ($item->batasan_utang ?? 0), 0, ',', '.') }}</td>
                         <td>{{ $item->kelompok_kantin ?: '-' }}</td>
                         <td class="text-center">
                             @if((int) $item->aktif === 1)
@@ -98,6 +100,7 @@
                                     data-periode="{{ $item->periode }}"
                                     data-batas_belanja_hari="{{ $item->batas_belanja_hari }}"
                                     data-batas_cash="{{ $item->batas_cash }}"
+                                    data-batasan_utang="{{ $item->batasan_utang ?? 0 }}"
                                     data-aktif="{{ (int) $item->aktif }}"
                                     data-kelompok_kantin="{{ $item->kelompok_kantin }}">
                                 <i class="ri-pencil-line me-1"></i> Edit
@@ -106,7 +109,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">Belum ada data setting batasan.</td>
+                        <td colspan="8" class="text-center text-muted py-4">Belum ada data setting batasan.</td>
                     </tr>
                 @endforelse
                 </tbody>
@@ -145,6 +148,13 @@
                             <label class="form-label required" for="form_batas_cash">Batas Cash</label>
                             <input type="number" class="form-control" id="form_batas_cash"
                                    name="batas_cash" min="0" step="1" required placeholder="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label required" for="form_batasan_utang">Batas Utang</label>
+                            <input type="number" class="form-control" id="form_batasan_utang"
+                                   name="batasan_utang" min="0" step="1" required placeholder="0"
+                                   title="Maksimal saldo boleh minus (contoh 20000 = utang s.d. Rp 20.000)">
+                            <div class="form-text">Saldo boleh minus sampai nilai ini. Isi 0 = tidak boleh utang.</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label" for="form_kelompok_kantin">Kelompok Kantin</label>
@@ -214,6 +224,7 @@
                 document.getElementById('form_periode').value = btn.dataset.periode || '';
                 document.getElementById('form_batas_belanja_hari').value = btn.dataset.batas_belanja_hari || 0;
                 document.getElementById('form_batas_cash').value = btn.dataset.batas_cash || 0;
+                document.getElementById('form_batasan_utang').value = btn.dataset.batasan_utang || 0;
                 document.getElementById('form_kelompok_kantin').value = btn.dataset.kelompok_kantin || '';
                 document.getElementById('form_aktif').value = String(btn.dataset.aktif ?? '1');
                 modal.show();
@@ -234,6 +245,7 @@
                     periode: document.getElementById('form_periode').value,
                     batas_belanja_hari: document.getElementById('form_batas_belanja_hari').value,
                     batas_cash: document.getElementById('form_batas_cash').value,
+                    batasan_utang: document.getElementById('form_batasan_utang').value,
                     kelompok_kantin: document.getElementById('form_kelompok_kantin').value,
                     aktif: document.getElementById('form_aktif').value,
                 };
