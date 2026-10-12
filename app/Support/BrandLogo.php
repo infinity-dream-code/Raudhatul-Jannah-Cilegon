@@ -15,6 +15,30 @@ final class BrandLogo
         return asset('logo.png');
     }
 
+    public static function publicPath(): string
+    {
+        foreach (self::candidatePaths() as $relative) {
+            if (is_file(public_path($relative))) {
+                return public_path($relative);
+            }
+        }
+
+        return public_path('logo.png');
+    }
+
+    public static function dataUri(): string
+    {
+        $path = self::publicPath();
+        $mime = match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'svg' => 'image/svg+xml',
+            'webp' => 'image/webp',
+            default => 'image/png',
+        };
+
+        return 'data:' . $mime . ';base64,' . base64_encode((string) file_get_contents($path));
+    }
+
     /**
      * @return list<string>
      */

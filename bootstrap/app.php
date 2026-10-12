@@ -11,6 +11,10 @@
 |
 */
 
+// Beberapa aplikasi Laravel berbagi proses PHP yang sama di server. Tanpa ini,
+// APP_NAME dsb. dari aplikasi lain bisa terbaca (putenv bocor antar-request).
+Illuminate\Support\Env::disablePutenv();
+
 $app = new Illuminate\Foundation\Application(
     $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
 );

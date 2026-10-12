@@ -22,7 +22,7 @@
                         <a href="{{route('cashless.login')}}" class="app-brand-link gap-2">
                             <span class="app-brand-logo demo">
                                 <span style="color: #666cff">
-                                        <img width="100" height="100" src="{{asset('logo.png')}}" alt="logo">
+                                        <img width="100" height="100" src="{{ \App\Support\BrandLogo::assetUrl() }}" alt="logo">
                                 </span>
                             </span>
                         </a>

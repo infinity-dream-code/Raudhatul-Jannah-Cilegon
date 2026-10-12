@@ -18,7 +18,7 @@
     <meta name="keep-alive-url" content="{{ route('admin.keep-alive') }}"/>
     <meta name="description" content="Core system ICT "/>
 
-    <link rel="icon" type="image/x-icon" href="{{asset('favicon.ico')}}"/>
+    <link rel="icon" href="{{ \App\Support\BrandLogo::assetUrl() }}"/>
 
     <link rel="stylesheet" href="{{asset('main/libs/perfect-scrollbar/perfect-scrollbar.css')}}"/>
     <link rel="stylesheet" href="{{asset('main/libs/sweetalert2/sweetalert2.css')}}"/>
@@ -201,7 +201,7 @@
                             <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);"
                                data-bs-toggle="dropdown">
                                 <div class="avatar avatar-online">
-                                    <img src="{{asset('logo.png')}}" alt class="rounded-circle">
+                                    <img src="{{ \App\Support\BrandLogo::assetUrl() }}" alt class="rounded-circle">
                                 </div>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
@@ -210,7 +210,7 @@
                                         <div class="d-flex">
                                             <div class="flex-shrink-0 me-2">
                                                 <div class="avatar avatar-online">
-                                                    <img src="{{asset('logo.png')}}" alt class="rounded-circle">
+                                                    <img src="{{ \App\Support\BrandLogo::assetUrl() }}" alt class="rounded-circle">
                                                 </div>
                                             </div>
                                             <div class="flex-grow-1">

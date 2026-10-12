@@ -109,7 +109,7 @@
 <table width="100%" class="">
     <tr class="">
         <td style="text-align: center; vertical-align: middle;">
-            <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.png'))) }}" style="max-height: 5rem; display: block; margin: auto;" alt="logo"/>
+            <img src="{{ \App\Support\BrandLogo::dataUri() }}" style="max-height: 5rem; display: block; margin: auto;" alt="logo"/>
         </td>
         <td>
             <table style="width: 100%;">
