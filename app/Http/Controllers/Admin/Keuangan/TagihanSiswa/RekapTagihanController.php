@@ -492,6 +492,7 @@ class RekapTagihanController extends Controller
             'scctbill.FIDBANK',
             'scctbill.FUrutan',
             'scctbill.FUrutan as Urutan',
+            'scctcust.CODE01',
             'scctcust.CODE02',
             'scctcust.DESC01',
             'scctcust.DESC02',
@@ -558,7 +559,10 @@ class RekapTagihanController extends Controller
             $item->Urutan = (string) $urut;
             if (!$item->NOCUST || $item->NOCUST == '-') $item->NOCUST = null;
             if (!$item->NUM2ND || $item->NUM2ND == '-') $item->NUM2ND = null;
-            $item->DESC04 = mst_thn_aka::labelFor($item->DESC04 !== null ? (string) $item->DESC04 : null);
+            $item->DESC04 = mst_thn_aka::labelFor(
+                $item->DESC04 !== null ? (string) $item->DESC04 : null,
+                (string) ($item->CODE01 ?? '')
+            );
             return $item;
         });
 

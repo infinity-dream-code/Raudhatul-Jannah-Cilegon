@@ -102,7 +102,8 @@ class EditManualController extends Controller
             'angkatan' => mst_thn_aka::labelFor(
                 ($item->DESC04 ?? $item->angkatan ?? null) !== null
                     ? (string) ($item->DESC04 ?? $item->angkatan)
-                    : null
+                    : null,
+                (string) ($item->CODE01 ?? '')
             ),
         ];
     }

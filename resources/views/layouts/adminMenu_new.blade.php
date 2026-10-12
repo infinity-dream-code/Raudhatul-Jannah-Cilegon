@@ -47,6 +47,11 @@
                         <div data-i18n="Tahun Akademik">Tahun Akademik</div>
                     </a>
                 </li>
+                <li class="menu-item {{ Request::is(['admin/master-data/setting-angkatan-unit*']) ? 'active' : '' }}">
+                    <a href="{{ route('admin.master-data.setting-angkatan-unit.index') }}" class="menu-link">
+                        <div data-i18n="Setting Angkatan Unit">Setting Angkatan Unit</div>
+                    </a>
+                </li>
                 {{-- Master Tagihan disembunyikan untuk Raudhatul Jannah Cilegon
                 <li class="menu-item {{ Request::is(['admin/master-data/master-tagihan*']) ? 'active' : '' }}">
                     <a href="{{ route('admin.master-data.master-tagihan.index') }}" class="menu-link">

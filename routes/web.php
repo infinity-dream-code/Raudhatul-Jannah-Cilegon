@@ -133,6 +133,14 @@ Route::prefix("admin")
                     Route::post("", "store")->name("store");
                     Route::put("{id}", "update")->name("update")->whereNumber("id");
                 });
+
+            Route::prefix("setting-angkatan-unit")
+                ->name("setting-angkatan-unit.")
+                ->controller(\App\Http\Controllers\Admin\MasterData\SettingAngkatanUnitController::class)
+                ->group(function () {
+                    Route::get("", "index")->name("index");
+                    Route::put("{code01}", "update")->name("update");
+                });
         });
 
         Route::prefix("keuangan")->name("keuangan.")->group(function () {

@@ -509,6 +509,7 @@
         });
     </script>
 @endif
+@include('layouts.partials.angkatan_unit_script')
 @yield('script')
 </body>
 </html>

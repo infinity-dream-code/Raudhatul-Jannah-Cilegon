@@ -279,6 +279,7 @@ class SaldoVirtualSakuController extends Controller
             'scctcust.DESC02',
             'scctcust.DESC03',
             'scctcust.CUSTID',
+            'scctcust.CODE01',
             'scctcust.DESC04',
         ]));
 
@@ -340,8 +341,11 @@ class SaldoVirtualSakuController extends Controller
                     $NOVA = scctcust::showVA($item->NUM2ND);
                 }
                 $item->NOVA = $NOVA;
-                $item->DESC04 = mst_thn_aka::labelFor($item->DESC04 !== null ? (string) $item->DESC04 : null);
-                unset($item->CUSTID);
+                $item->DESC04 = mst_thn_aka::labelFor(
+                    $item->DESC04 !== null ? (string) $item->DESC04 : null,
+                    (string) ($item->CODE01 ?? '')
+                );
+                unset($item->CUSTID, $item->CODE01);
                 return $item;
             })->toArray();
 

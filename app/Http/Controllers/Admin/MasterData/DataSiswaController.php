@@ -198,6 +198,7 @@ class DataSiswaController extends Controller
 
         $select = [
             "scctcust.CUSTID",
+            "scctcust.CODE01",
             "scctcust.nocust",
             "scctcust.NUM2ND",
             "scctcust.nmcust",
@@ -235,20 +236,18 @@ class DataSiswaController extends Controller
             ? $totalRecords
             : (clone $filteredQuery)->count("CUSTID");
 
-        $angkatanMap = mst_thn_aka::thnAkaToAngkatanMap();
-
         $records = $filteredQuery
             ->orderBy($columnName, $columnSortOrder)
             ->skip($start)
             ->take($length)
             ->select($select)
             ->get()
-            ->map(function ($item) use ($angkatanMap) {
+            ->map(function ($item) {
                 $row = $item->toArray();
+                unset($row["CODE01"]);
                 $nis = trim((string) ($item->nocust ?? ''));
                 $thnAka = $item->DESC04 !== null ? (string) $item->DESC04 : '';
-                $angkatanNo = $angkatanMap[$thnAka] ?? '';
-                $angkatanLabel = $angkatanNo !== '' ? "Angkatan {$angkatanNo}" : $thnAka;
+                $angkatanLabel = mst_thn_aka::labelFor($thnAka, (string) ($item->CODE01 ?? ''));
 
                 $row["item_id"] = $item->CUSTID;
                 $row["select_reset"] = '<input type="checkbox" class="form-check-input reset-android-row" value="' . e((string) $item->CUSTID) . '">';
@@ -299,7 +298,7 @@ class DataSiswaController extends Controller
             })
             ->orderBy("nmcust", "asc")
             ->limit(50)
-            ->get(["CUSTID", "nocust", "NUM2ND", "nmcust", "CODE02", "DESC02", "DESC03", "DESC04"])
+            ->get(["CUSTID", "CODE01", "nocust", "NUM2ND", "nmcust", "CODE02", "DESC02", "DESC03", "DESC04"])
             ->map(function ($item) {
                 $nis = trim((string) ($item->nocust ?? ''));
                 $noDaftar = trim((string) ($item->NUM2ND ?? ''));
@@ -308,10 +307,14 @@ class DataSiswaController extends Controller
                     : (($noDaftar !== '' && $noDaftar !== '-')
                         ? "No. Daftar : {$noDaftar}"
                         : 'Tanpa NIS');
+                $angkatan = mst_thn_aka::labelFor(
+                    $item->DESC04 !== null ? (string) $item->DESC04 : null,
+                    (string) ($item->CODE01 ?? '')
+                );
 
                 return [
                     "id" => $item->CUSTID,
-                    "text" => "{$identifier} - {$item->nmcust} | {$item->CODE02} - {$item->DESC02} - {$item->DESC03} - " . mst_thn_aka::labelFor($item->DESC04 !== null ? (string) $item->DESC04 : null),
+                    "text" => "{$identifier} - {$item->nmcust} | {$item->CODE02} - {$item->DESC02} - {$item->DESC03} - " . $angkatan,
                     "CUSTID" => $item->CUSTID,
                     "NOCUST" => $item->nocust,
                     "NUM2ND" => $item->NUM2ND,
@@ -319,7 +322,7 @@ class DataSiswaController extends Controller
                     "CODE02" => $item->CODE02,
                     "DESC02" => $item->DESC02,
                     "DESC03" => $item->DESC03,
-                    "DESC04" => mst_thn_aka::labelFor($item->DESC04 !== null ? (string) $item->DESC04 : null),
+                    "DESC04" => $angkatan,
                     "GENUS" => null,
                 ];
             });
@@ -354,7 +357,7 @@ class DataSiswaController extends Controller
             ->when($nama, fn ($q) => $q->where("nmcust", "like", $nama))
             ->orderBy("nmcust", "asc")
             ->limit(200)
-            ->get(["CUSTID", "nocust", "NUM2ND", "nmcust", "CODE02", "DESC02", "DESC03", "DESC04"])
+            ->get(["CUSTID", "CODE01", "nocust", "NUM2ND", "nmcust", "CODE02", "DESC02", "DESC03", "DESC04"])
             ->map(function ($item) {
                 return [
                     "id" => $item->CUSTID,
@@ -364,7 +367,10 @@ class DataSiswaController extends Controller
                     "unit" => $item->CODE02,
                     "kelompok" => $item->DESC02,
                     "kelas" => trim(($item->DESC02 ?? "") . " " . ($item->DESC03 ?? "")),
-                    "thn_aka" => mst_thn_aka::labelFor($item->DESC04 !== null ? (string) $item->DESC04 : null),
+                    "thn_aka" => mst_thn_aka::labelFor(
+                        $item->DESC04 !== null ? (string) $item->DESC04 : null,
+                        (string) ($item->CODE01 ?? '')
+                    ),
                 ];
             });
 

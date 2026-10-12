@@ -117,6 +117,7 @@ class BuatTagihanController extends Controller
             'scctcust.DESC02',
             'scctcust.DESC03',
             'scctcust.DESC04 as angkatan',
+            'scctcust.CODE01',
         ];
 
         $query = scctcust::query()
@@ -193,7 +194,10 @@ class BuatTagihanController extends Controller
                     'CODE03' => $item->CODE03,
                     'kelas' => trim(($item->DESC02 ?? '') . ' ' . ($item->DESC03 ?? '')),
                     'jenjang' => $item->DESC02,
-                    'angkatan' => mst_thn_aka::labelFor($item->angkatan !== null ? (string) $item->angkatan : null),
+                    'angkatan' => mst_thn_aka::labelFor(
+                        $item->angkatan !== null ? (string) $item->angkatan : null,
+                        (string) ($item->CODE01 ?? '')
+                    ),
                 ];
             });
 
