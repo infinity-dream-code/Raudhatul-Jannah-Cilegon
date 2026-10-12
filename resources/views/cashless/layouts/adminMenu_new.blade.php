@@ -49,6 +49,7 @@
                 <div data-i18n="Tap Belanja">Tap Belanja</div>
             </a>
         </li>
+        {{-- Cek Limit disembunyikan sementara
         <li class="menu-item  {{ Request::is(['admin/cek-limit*'])  ? 'active' : '' }}">
             <a href="{{route('cashless.admin.cek-limit.index')}}" class="menu-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -63,6 +64,7 @@
                 <div data-i18n="Cek Limit">Cek Limit</div>
             </a>
         </li>
+        --}}
         @endunless
         <li class="menu-item  {{ Request::is(['admin/cek-saldo*'])  ? 'active' : '' }}">
             <a href="{{route('cashless.admin.cek-saldo.index')}}" class="menu-link">

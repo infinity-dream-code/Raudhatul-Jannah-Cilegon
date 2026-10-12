@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class DataKartuSiswaController extends Controller
@@ -65,7 +66,13 @@ class DataKartuSiswaController extends Controller
         ]);
 
         $custid = (int) $validated['custid'];
-        $noKartu = trim((string) $validated['no_kartu']);
+        $noKartu = preg_replace('/\s+/', '', (string) $validated['no_kartu']);
+        if ($noKartu === '') {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('smartcard_error', 'Nomor kartu RFID wajib diisi.');
+        }
         $pin = trim((string) ($validated['pin'] ?? ''));
         if ($pin === '') {
             $pin = '123';
@@ -83,25 +90,50 @@ class DataKartuSiswaController extends Controller
                 ->with('smartcard_error', 'Siswa tidak ditemukan di database.');
         }
 
-        $existsPid = DB::connection('DATA_MYSQL')
-            ->table('sm_pin')
-            ->where('PID', $noKartu)
-            ->exists();
+        $db = DB::connection('DATA_MYSQL');
 
-        if ($existsPid) {
+        try {
+            $result = $db->transaction(function () use ($db, $custid, $noKartu, $pin) {
+                $existsPid = $db->table('sm_pin')
+                    ->where('PID', $noKartu)
+                    ->lockForUpdate()
+                    ->exists();
+                if ($existsPid) {
+                    return 'duplicate';
+                }
+
+                // sm_pin.urut bukan auto-increment.
+                $nextUrut = ((int) $db->table('sm_pin')->lockForUpdate()->max('urut')) + 1;
+
+                $db->table('sm_pin')->insert([
+                    'CUSTID' => $custid,
+                    'PID' => $noKartu,
+                    'PIN' => $pin,
+                    'BLOKIR' => 0,
+                    'urut' => $nextUrut,
+                ]);
+
+                return 'ok';
+            });
+        } catch (\Throwable $e) {
+            Log::error('DataKartuSiswa store failed', [
+                'custid' => $custid,
+                'pid' => $noKartu,
+                'message' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('smartcard_error', 'Gagal menyimpan data kartu. Silakan coba lagi.');
+        }
+
+        if ($result === 'duplicate') {
             return redirect()
                 ->back()
                 ->withInput()
                 ->with('smartcard_error', 'Nomor kartu sudah digunakan. Setiap nomor kartu harus unik.');
         }
-
-        DB::connection('DATA_MYSQL')->table('sm_pin')->insert([
-            'CUSTID' => $custid,
-            'PID' => $noKartu,
-            'PIN' => $pin,
-            'BLOKIR' => 0,
-            'urut' => null,
-        ]);
 
         return redirect()
             ->route('smartcard.data_kartu')

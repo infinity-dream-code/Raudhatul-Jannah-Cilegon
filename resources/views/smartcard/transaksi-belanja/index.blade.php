@@ -14,14 +14,14 @@
 
                     <div class="sc-form-grid sc-tb-form">
                         <div class="sc-field">
-                            <label for="thnAkademik">Tahun Pelajaran</label>
+                            <label for="angkatan">Angkatan Siswa</label>
                             <div class="sc-control-wrap sc-control-select">
-                                <select id="thnAkademik" name="thn_akademik">
+                                <select id="angkatan" name="angkatan">
                                     <option value="">Semua</option>
                                     @foreach ($thnAka as $row)
                                         @php $val = trim((string) ($row->thn_aka ?? '')); @endphp
                                         @if ($val !== '')
-                                            <option value="{{ $val }}" @selected(($filters['thn_akademik'] ?? '') === $val)>{{ $val }}</option>
+                                            <option value="{{ $val }}" @selected(($filters['angkatan'] ?? '') === $val)>{{ angkatan_label($val) }}</option>
                                         @endif
                                     @endforeach
                                 </select>
@@ -53,20 +53,6 @@
                             <label for="nis">NIS</label>
                             <div class="sc-control-wrap">
                                 <input type="text" id="nis" name="nis" value="{{ $filters['nis'] ?? '' }}" placeholder="Nomor induk siswa">
-                            </div>
-                        </div>
-                        <div class="sc-field">
-                            <label for="thnAngkatan">Tahun Angkatan</label>
-                            <div class="sc-control-wrap sc-control-select">
-                                <select id="thnAngkatan" name="thn_angkatan">
-                                    <option value="">Semua</option>
-                                    @foreach ($thnAka as $row)
-                                        @php $val = trim((string) ($row->thn_aka ?? '')); @endphp
-                                        @if ($val !== '')
-                                            <option value="{{ $val }}" @selected(($filters['thn_angkatan'] ?? '') === $val)>{{ $val }}</option>
-                                        @endif
-                                    @endforeach
-                                </select>
                             </div>
                         </div>
                         <div class="sc-field">

@@ -32,33 +32,21 @@
                             </div>
                         </div>
                         <div class="sc-field sc-field-kartu">
-                            <label for="noKartuInput">No Kartu</label>
+                            <label for="noKartuInput">No Kartu RFID</label>
                             <div class="sc-control-wrap sc-control-kartu sc-control-kartu-scan">
                                 <input type="text" id="noKartuInput" name="no_kartu" value="{{ $noKartu ?? '' }}"
-                                       placeholder="Isi manual / scan barcode" autocomplete="off">
-                                <button type="button" id="btnScanBarcode" class="sc-scan-btn" title="Scan barcode">
+                                       placeholder="Tap kartu RFID / isi manual" autocomplete="off" inputmode="numeric">
+                                <button type="button" id="btnTapRfid" class="sc-scan-btn" title="Tap kartu RFID">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
-                                        <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
-                                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
-                                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
-                                        <path d="M7 8v8"/>
-                                        <path d="M11 8v8"/>
-                                        <path d="M15 8v8"/>
-                                        <path d="M19 8v8"/>
+                                        <rect x="3" y="5" width="13" height="14" rx="2"/>
+                                        <path d="M19 8a6 6 0 0 1 0 8"/>
+                                        <path d="M21.5 5.5a10 10 0 0 1 0 13"/>
                                     </svg>
-                                    <span>Scan</span>
+                                    <span>Tap RFID</span>
                                 </button>
                             </div>
-                            <div id="barcodeScannerWrap" class="sc-barcode-wrap" hidden>
-                                <div class="sc-barcode-head">
-                                    <span>Arahkan kamera ke barcode kartu</span>
-                                    <button type="button" id="btnCloseBarcode" class="sc-barcode-close">Tutup</button>
-                                </div>
-                                <div id="barcodeReader" class="sc-barcode-reader"></div>
-                                <small class="sc-barcode-hint">Mendukung barcode & QR. Hasil scan otomatis mengisi No Kartu.</small>
-                            </div>
+                            <small id="rfidHint" class="sc-rfid-hint" hidden>Menunggu tap kartu RFID di reader…</small>
                         </div>
                         <div class="sc-field">
                             <label for="namaSiswa">Nama</label>
@@ -290,44 +278,12 @@
             color: #fff;
             border-left-color: #d97706;
         }
-        .sc-barcode-wrap {
-            margin-top: 10px;
-            border: 1px solid #fcd34d;
-            border-radius: 10px;
-            background: #fffbeb;
-            padding: 12px;
-        }
-        .sc-barcode-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 10px;
-            font-size: 13px;
-            font-weight: 700;
-            color: #92400e;
-        }
-        .sc-barcode-close {
-            border: 1px solid #f59e0b;
-            background: #fff;
-            color: #92400e;
-            border-radius: 8px;
-            padding: 4px 10px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        .sc-barcode-reader {
-            max-width: 360px;
-            margin: 0 auto;
-            overflow: hidden;
-            border-radius: 8px;
-        }
-        .sc-barcode-hint {
+        .sc-rfid-hint {
             display: block;
             margin-top: 8px;
             color: #a16207;
             font-size: 12px;
+            font-weight: 600;
         }
         #siswaAutoList {
             display: none;
@@ -474,7 +430,6 @@
         }
     </style>
 
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script>
         (function () {
             const siswaSearchUrl = @json(route('smartcard.data_kartu.siswa_search'));
@@ -489,135 +444,49 @@
             const siswaList = document.getElementById('siswaAutoList');
             const siswaWrap = document.getElementById('siswaAutoWrap');
             const nisField = document.querySelector('.sc-field-nis');
-            const btnScanBarcode = document.getElementById('btnScanBarcode');
-            const btnCloseBarcode = document.getElementById('btnCloseBarcode');
-            const barcodeScannerWrap = document.getElementById('barcodeScannerWrap');
+            const btnTapRfid = document.getElementById('btnTapRfid');
+            const rfidHint = document.getElementById('rfidHint');
             let searchTimer = null;
             let searchSeq = 0;
-            let barcodeScanner = null;
-            let barcodeScannerActive = false;
 
-            const parseBarcodeContent = function (raw) {
-                const value = String(raw || '').trim();
-                if (!value) return '';
-
-                if (value.startsWith('{') || value.startsWith('[')) {
-                    try {
-                        const json = JSON.parse(value);
-                        for (const key of ['no_kartu', 'pid', 'PID', 'tap_id', 'TAP_ID', 'id', 'card_id']) {
-                            if (json[key]) return String(json[key]).trim();
-                        }
-                    } catch (e) {}
-                }
-
-                const urlMatch = value.match(/[?&](?:no_kartu|pid|tap_id|id)=([^&]+)/i);
-                if (urlMatch) return decodeURIComponent(urlMatch[1]).trim();
-                if (value.includes('|')) return value.split('|')[0].trim();
-
-                return value;
+            const normalizeRfid = function (raw) {
+                return String(raw || '').replace(/\s+/g, '').trim();
             };
 
             const syncSaveFields = function () {
                 if (custidSave) custidSave.value = custidHidden ? custidHidden.value : '';
-                if (noKartuSave && noKartuInput) noKartuSave.value = noKartuInput.value;
+                if (noKartuSave && noKartuInput) noKartuSave.value = normalizeRfid(noKartuInput.value);
                 if (pinSave && pinInput) pinSave.value = pinInput.value || '123';
             };
 
-            const setNoKartuFromScan = function (raw) {
-                const code = parseBarcodeContent(raw);
-                if (!code || !noKartuInput) return '';
-                noKartuInput.value = code;
+            const setRfidWaiting = function (waiting) {
+                if (rfidHint) rfidHint.hidden = !waiting;
+                if (btnTapRfid) btnTapRfid.classList.toggle('is-active', waiting);
+            };
+
+            const startRfidTap = function () {
+                if (!noKartuInput) return;
+                noKartuInput.value = '';
                 syncSaveFields();
+                setRfidWaiting(true);
                 noKartuInput.focus();
-                noKartuInput.select();
-                return code;
             };
 
-            const stopBarcodeScanner = function () {
-                if (barcodeScanner && barcodeScannerActive) {
-                    barcodeScanner.stop().then(function () {
-                        barcodeScanner.clear();
-                    }).catch(function () {});
-                    barcodeScannerActive = false;
-                }
-                if (barcodeScannerWrap) barcodeScannerWrap.hidden = true;
-                if (btnScanBarcode) btnScanBarcode.classList.remove('is-active');
-            };
-
-            const startBarcodeScanner = async function () {
-                if (!barcodeScannerWrap || typeof Html5Qrcode === 'undefined') {
-                    alert('Library scanner belum siap. Muat ulang halaman lalu coba lagi.');
-                    return;
-                }
-
-                if (barcodeScannerActive) {
-                    stopBarcodeScanner();
-                    return;
-                }
-
-                barcodeScannerWrap.hidden = false;
-                if (btnScanBarcode) btnScanBarcode.classList.add('is-active');
-
-                if (!barcodeScanner) {
-                    barcodeScanner = new Html5Qrcode('barcodeReader');
-                }
-
-                const formats = (typeof Html5QrcodeSupportedFormats !== 'undefined')
-                    ? [
-                        Html5QrcodeSupportedFormats.QR_CODE,
-                        Html5QrcodeSupportedFormats.CODE_128,
-                        Html5QrcodeSupportedFormats.CODE_39,
-                        Html5QrcodeSupportedFormats.CODE_93,
-                        Html5QrcodeSupportedFormats.EAN_13,
-                        Html5QrcodeSupportedFormats.EAN_8,
-                        Html5QrcodeSupportedFormats.UPC_A,
-                        Html5QrcodeSupportedFormats.UPC_E,
-                        Html5QrcodeSupportedFormats.ITF,
-                        Html5QrcodeSupportedFormats.CODABAR,
-                    ]
-                    : undefined;
-
-                try {
-                    await barcodeScanner.start(
-                        { facingMode: 'environment' },
-                        {
-                            fps: 10,
-                            qrbox: { width: 280, height: 140 },
-                            formatsToSupport: formats,
-                        },
-                        function (decodedText) {
-                            const code = setNoKartuFromScan(decodedText);
-                            if (code) {
-                                stopBarcodeScanner();
-                            }
-                        },
-                        function () {}
-                    );
-                    barcodeScannerActive = true;
-                } catch (err) {
-                    stopBarcodeScanner();
-                    alert('Tidak dapat membuka kamera. Pastikan izin kamera aktif, atau isi No Kartu manual / gunakan scanner USB.');
-                }
-            };
-
-            if (btnScanBarcode) {
-                btnScanBarcode.addEventListener('click', function () {
-                    startBarcodeScanner();
-                });
-            }
-            if (btnCloseBarcode) {
-                btnCloseBarcode.addEventListener('click', function () {
-                    stopBarcodeScanner();
-                });
+            if (btnTapRfid) {
+                btnTapRfid.addEventListener('click', startRfidTap);
             }
 
             if (noKartuInput) {
                 noKartuInput.addEventListener('input', syncSaveFields);
-                // Scanner USB (keyboard wedge) biasanya diakhiri Enter
+                noKartuInput.addEventListener('blur', function () { setRfidWaiting(false); });
+                // Reader RFID USB mengetik nomor kartu lalu Enter
                 noKartuInput.addEventListener('keydown', function (e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
-                        setNoKartuFromScan(noKartuInput.value);
+                        noKartuInput.value = normalizeRfid(noKartuInput.value);
+                        syncSaveFields();
+                        setRfidWaiting(false);
+                        noKartuInput.select();
                     }
                 });
             }
@@ -728,10 +597,6 @@
                 if (!siswaWrap.contains(e.target)) {
                     closeList();
                 }
-            });
-
-            window.addEventListener('beforeunload', function () {
-                stopBarcodeScanner();
             });
 
             syncSaveFields();

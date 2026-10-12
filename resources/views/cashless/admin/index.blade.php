@@ -35,6 +35,7 @@
                         </a>
                     </div>
                 </div>
+                {{-- Cek Limit disembunyikan sementara
                 <div class="col mb-6 text-center">
                     <div class="card card-border-shadow-success bg-label-success p-5 h-100">
                         <a href="{{route('cashless.admin.cek-limit.index')}}"
@@ -54,6 +55,7 @@
                         </a>
                     </div>
                 </div>
+                --}}
                 @endunless
                 <div class="col mb-6 text-center">
                     <div class="card card-border-shadow-primary bg-label-primary p-5 h-100">

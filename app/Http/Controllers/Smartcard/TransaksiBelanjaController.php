@@ -17,8 +17,7 @@ class TransaksiBelanjaController extends Controller
     {
         $isSearch = $request->boolean('search');
         $filters = [
-            'thn_akademik' => trim((string) $request->query('thn_akademik', '')),
-            'thn_angkatan' => trim((string) $request->query('thn_angkatan', '')),
+            'angkatan' => trim((string) $request->query('angkatan', '')),
             'nis' => trim((string) $request->query('nis', '')),
             'nama' => trim((string) $request->query('nama', '')),
             'dari_tanggal' => trim((string) $request->query('dari_tanggal', '')),
@@ -113,12 +112,8 @@ class TransaksiBelanjaController extends Controller
             $query->where('scctcust.NMCUST', 'like', '%' . $filters['nama'] . '%');
         }
 
-        if ($filters['thn_akademik'] !== '') {
-            $this->applyAngkatanLike($query, $filters['thn_akademik']);
-        }
-
-        if ($filters['thn_angkatan'] !== '') {
-            $this->applyAngkatanLike($query, $filters['thn_angkatan']);
+        if ($filters['angkatan'] !== '') {
+            $this->applyAngkatanLike($query, $filters['angkatan']);
         }
 
         if ($filters['dari_tanggal'] !== '') {
