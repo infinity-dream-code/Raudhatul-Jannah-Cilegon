@@ -63,6 +63,8 @@ class DataKartuSiswaController extends Controller
             'custid.required' => 'Pilih siswa (NIS) terlebih dahulu.',
             'custid.min' => 'Data siswa tidak valid.',
             'no_kartu.required' => 'Nomor kartu wajib diisi.',
+            'no_kartu.max' => 'Nomor kartu maksimal 50 karakter.',
+            'pin.max' => 'PIN maksimal 20 karakter.',
         ]);
 
         $custid = (int) $validated['custid'];
@@ -125,7 +127,7 @@ class DataKartuSiswaController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('smartcard_error', 'Gagal menyimpan data kartu. Silakan coba lagi.');
+                ->with('smartcard_error', 'Gagal menyimpan data kartu: ' . \Illuminate\Support\Str::limit($e->getMessage(), 300));
         }
 
         if ($result === 'duplicate') {
@@ -136,8 +138,8 @@ class DataKartuSiswaController extends Controller
         }
 
         return redirect()
-            ->route('smartcard.data_kartu')
-            ->with('smartcard_success', 'Data kartu siswa berhasil disimpan.');
+            ->route('smartcard.data_kartu', ['search' => 1, 'custid' => $custid])
+            ->with('smartcard_success', 'Kartu ' . $noKartu . ' berhasil disimpan untuk ' . trim((string) ($siswa->NMCUST ?? '')) . '.');
     }
 
     public function searchSiswa(Request $request): JsonResponse

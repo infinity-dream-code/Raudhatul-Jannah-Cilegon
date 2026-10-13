@@ -15,6 +15,13 @@
                 @if (session('smartcard_error'))
                     <div class="sc-alert sc-alert-error">{{ session('smartcard_error') }}</div>
                 @endif
+                @if ($errors->any())
+                    <div class="sc-alert sc-alert-error">
+                        @foreach ($errors->all() as $message)
+                            <div>{{ $message }}</div>
+                        @endforeach
+                    </div>
+                @endif
 
                 <form id="formSearch" method="GET" action="{{ route('smartcard.data_kartu') }}">
                     <input type="hidden" name="search" value="1">
