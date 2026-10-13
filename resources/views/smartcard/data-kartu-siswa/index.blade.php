@@ -102,7 +102,9 @@
                             </thead>
                             <tbody>
                                 @forelse (($kartuRows ?? null) as $index => $row)
-                                    @php($isBlokir = trim((string) ($row->blokir ?? '0')) === '1')
+                                    @php
+                                        $isBlokir = trim((string) ($row->blokir ?? '0')) === '1';
+                                    @endphp
                                     <tr>
                                         <td>{{ ($kartuRows->firstItem() ?? 0) + $index }}</td>
                                         <td>{{ $row->nis ?? '—' }}</td>

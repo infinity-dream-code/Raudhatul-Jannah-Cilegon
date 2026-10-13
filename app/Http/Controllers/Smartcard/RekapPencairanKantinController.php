@@ -70,12 +70,14 @@ class RekapPencairanKantinController extends Controller
     {
         $validated = $request->validate([
             'kantin' => ['required', 'string', 'max:50'],
-            'dari_tanggal' => ['required', 'date'],
-            'sampai_tanggal' => ['required', 'date', 'after_or_equal:dari_tanggal'],
+            'dari_tanggal' => ['nullable', 'date'],
+            'sampai_tanggal' => ['nullable', 'date'],
             'nama_penerima' => ['required', 'string', 'max:30'],
             'nominal' => ['required', 'integer', 'min:1'],
         ], [
-            'kantin.required' => 'Pilih kantin terlebih dahulu.',
+            'kantin.required' => 'Pilih merchant yang mencairkan terlebih dahulu.',
+            'nama_penerima.max' => 'Nama penerima maksimal 30 karakter.',
+            'nominal.integer' => 'Nominal harus berupa angka bulat.',
             'nama_penerima.required' => 'Nama penerima wajib diisi.',
             'nominal.required' => 'Nominal wajib diisi.',
             'nominal.min' => 'Nominal harus lebih dari 0.',
@@ -89,8 +91,15 @@ class RekapPencairanKantinController extends Controller
                 ->withErrors(['kantin' => 'Kantin tidak ditemukan.']);
         }
 
-        $dari = Carbon::parse($validated['dari_tanggal'])->startOfDay();
-        $sampai = Carbon::parse($validated['sampai_tanggal'])->endOfDay();
+        $dari = !empty($validated['dari_tanggal'])
+            ? Carbon::parse($validated['dari_tanggal'])->startOfDay()
+            : now()->startOfMonth();
+        $sampai = !empty($validated['sampai_tanggal'])
+            ? Carbon::parse($validated['sampai_tanggal'])->endOfDay()
+            : now()->endOfDay();
+        if ($sampai->lt($dari)) {
+            [$dari, $sampai] = [$sampai->copy()->startOfDay(), $dari->copy()->endOfDay()];
+        }
 
         $noTerima = $this->generateNoTerima();
 

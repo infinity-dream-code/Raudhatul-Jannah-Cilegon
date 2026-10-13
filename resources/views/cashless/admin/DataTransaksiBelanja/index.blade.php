@@ -175,7 +175,9 @@
                                         <option value="all">Semua</option>
                                         @isset($thn_aka)
                                             @foreach($thn_aka as $item)
-                                                @php($angkatanText = angkatan_label($item->thn_aka))
+                                                @php
+                                                    $angkatanText = angkatan_label($item->thn_aka);
+                                                @endphp
                                                 <option value="{{$item->thn_aka}}">{{ $angkatanText === $item->thn_aka ? $item->thn_aka : $angkatanText . ' (' . $item->thn_aka . ')' }}</option>
                                             @endforeach
                                         @else

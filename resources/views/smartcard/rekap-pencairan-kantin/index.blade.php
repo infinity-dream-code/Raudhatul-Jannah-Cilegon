@@ -56,9 +56,20 @@
                     <div class="rp-builder-col rp-builder-col-right">
                         <form method="POST" action="{{ route('smartcard.rekap_pencairan_kantin.store') }}" id="rpFormSave" class="rp-inner-form">
                             @csrf
-                            <input type="hidden" name="kantin" id="kdMercanSave" value="{{ $kantinUsername ?? '' }}">
                             <input type="hidden" name="dari_tanggal" id="dariTanggalSave" value="{{ $dariTanggal ?? '' }}">
                             <input type="hidden" name="sampai_tanggal" id="sampaiTanggalSave" value="{{ $sampaiTanggal ?? '' }}">
+
+                            <div class="sc-field">
+                                <label for="kdMercanSave">Merchant yang Mencairkan</label>
+                                <div class="sc-control-wrap sc-control-select">
+                                    <select id="kdMercanSave" name="kantin" required>
+                                        <option value="">{{ empty($kantinOptions) ? 'Belum ada data kantin' : 'Pilih Merchant' }}</option>
+                                        @foreach ($kantinOptions as $k)
+                                            <option value="{{ $k->kode }}" @selected(old('kantin', $kantinUsername ?? '') === $k->kode)>{{ $k->nama }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
 
                             <div class="sc-field">
                                 <label for="namaPenerima">Nama Penerima</label>
@@ -257,8 +268,12 @@
             const nominal = document.getElementById('nominal');
             const btnLiat = document.getElementById('btnLiatPencairan');
 
+            const kantinSave = document.getElementById('kdMercanSave');
+            kdMercan?.addEventListener('change', () => {
+                if (kantinSave && kdMercan.value) kantinSave.value = kdMercan.value;
+            });
+
             const syncToSave = () => {
-                document.getElementById('kdMercanSave').value = kdMercan?.value || '';
                 document.getElementById('dariTanggalSave').value = dariTanggal?.value || '';
                 document.getElementById('sampaiTanggalSave').value = sampaiTanggal?.value || '';
             };
