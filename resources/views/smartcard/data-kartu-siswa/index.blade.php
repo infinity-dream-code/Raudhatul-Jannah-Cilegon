@@ -42,7 +42,7 @@
                             <label for="noKartuInput">No Kartu RFID</label>
                             <div class="sc-control-wrap sc-control-kartu sc-control-kartu-scan">
                                 <input type="text" id="noKartuInput" name="no_kartu" value="{{ $noKartu ?? '' }}"
-                                       placeholder="Tap kartu RFID / isi manual" autocomplete="off" inputmode="numeric">
+                                       placeholder="Tap kartu RFID / isi manual" autocomplete="off" inputmode="numeric" maxlength="16">
                                 <button type="button" id="btnTapRfid" class="sc-scan-btn" title="Tap kartu RFID">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -64,7 +64,7 @@
                         <div class="sc-field">
                             <label for="pinInput">PIN</label>
                             <div class="sc-control-wrap sc-control-readonly">
-                                <input type="text" id="pinInput" name="pin" value="{{ $pin ?? '123' }}" placeholder="123">
+                                <input type="text" id="pinInput" name="pin" value="{{ $pin ?? '123' }}" placeholder="123" maxlength="6">
                             </div>
                         </div>
                     </div>

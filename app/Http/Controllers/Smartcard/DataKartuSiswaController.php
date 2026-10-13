@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class DataKartuSiswaController extends Controller
@@ -57,14 +58,14 @@ class DataKartuSiswaController extends Controller
     {
         $validated = $request->validate([
             'custid' => ['required', 'integer', 'min:1'],
-            'no_kartu' => ['required', 'string', 'max:50'],
-            'pin' => ['nullable', 'string', 'max:20'],
+            'no_kartu' => ['required', 'string', 'max:16'],
+            'pin' => ['nullable', 'string', 'max:6'],
         ], [
             'custid.required' => 'Pilih siswa (NIS) terlebih dahulu.',
             'custid.min' => 'Data siswa tidak valid.',
             'no_kartu.required' => 'Nomor kartu wajib diisi.',
-            'no_kartu.max' => 'Nomor kartu maksimal 50 karakter.',
-            'pin.max' => 'PIN maksimal 20 karakter.',
+            'no_kartu.max' => 'Nomor kartu maksimal 16 karakter.',
+            'pin.max' => 'PIN maksimal 6 karakter.',
         ]);
 
         $custid = (int) $validated['custid'];
@@ -95,7 +96,9 @@ class DataKartuSiswaController extends Controller
         $db = DB::connection('DATA_MYSQL');
 
         try {
-            $result = $db->transaction(function () use ($db, $custid, $noKartu, $pin) {
+            $hasUrut = Schema::connection('DATA_MYSQL')->hasColumn('sm_pin', 'urut');
+
+            $result = $db->transaction(function () use ($db, $custid, $noKartu, $pin, $hasUrut) {
                 $existsPid = $db->table('sm_pin')
                     ->where('PID', $noKartu)
                     ->lockForUpdate()
@@ -104,16 +107,19 @@ class DataKartuSiswaController extends Controller
                     return 'duplicate';
                 }
 
-                // sm_pin.urut bukan auto-increment.
-                $nextUrut = ((int) $db->table('sm_pin')->lockForUpdate()->max('urut')) + 1;
-
-                $db->table('sm_pin')->insert([
+                $row = [
                     'CUSTID' => $custid,
                     'PID' => $noKartu,
                     'PIN' => $pin,
-                    'BLOKIR' => 0,
-                    'urut' => $nextUrut,
-                ]);
+                    'BLOKIR' => '0',
+                ];
+
+                // Di sebagian database sm_pin punya kolom urut (bukan auto-increment), di sebagian tidak.
+                if ($hasUrut) {
+                    $row['urut'] = ((int) $db->table('sm_pin')->lockForUpdate()->max('urut')) + 1;
+                }
+
+                $db->table('sm_pin')->insert($row);
 
                 return 'ok';
             });
