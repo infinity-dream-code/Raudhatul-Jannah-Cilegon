@@ -97,7 +97,7 @@
                                     <th>NIS</th>
                                     <th>Nama</th>
                                     <th>No Kartu</th>
-                                    <th style="width:150px;">Aksi</th>
+                                    <th style="width:170px;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -119,7 +119,7 @@
                                                 <label class="sc-switch" title="{{ $isBlokir ? 'Klik untuk buka blokir' : 'Klik untuk blokir' }}">
                                                     <input type="checkbox" class="sc-blokir-toggle" @checked($isBlokir)>
                                                     <span class="sc-switch-slider"></span>
-                                                    <span class="sc-switch-text {{ $isBlokir ? 'is-blokir' : '' }}">{{ $isBlokir ? 'Diblokir' : 'Aktif' }}</span>
+                                                    <span class="sc-switch-text {{ $isBlokir ? 'is-blokir' : '' }}">{{ $isBlokir ? 'Diblokir' : 'Tidak Diblokir' }}</span>
                                                 </label>
                                             </form>
                                         </td>
