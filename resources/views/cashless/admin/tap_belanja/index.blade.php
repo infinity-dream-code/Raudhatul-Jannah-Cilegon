@@ -106,7 +106,7 @@
                 modelUrl: @json(asset('vendor/face-api/weights')),
             };
         </script>
-        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261005e"></script>
+        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261013b"></script>
         <script defer>
             document.addEventListener('DOMContentLoaded', function () {
                 var faceTab = document.getElementById('tab-face-btn');
@@ -170,7 +170,8 @@
                                 document.getElementById('saldo').value = 0;
                                 document.getElementById('nama').value = '';
                             } else {
-                                document.getElementById('belanja').setAttribute('max', result[1]);
+                                const batasanUtang = Number(processForm.data.batasan_utang) || 0;
+                                document.getElementById('belanja').setAttribute('max', Math.max(0, (Number(result[1]) || 0) + batasanUtang));
                                 document.getElementById('saldo').value = result[1];
                                 document.getElementById('nama').value = result[2];
                                 currentIDStatus = true;

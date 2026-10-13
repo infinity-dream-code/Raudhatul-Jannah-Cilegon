@@ -17,8 +17,6 @@ class RiwayatPencairanController extends Controller
     private string $mainTitle = 'Data Riwayat Pencairan';
 
     private array $allowedFilters = [
-        'dari_tanggal' => 'dari_tgl_tran',
-        'sampai_tanggal' => 'akhir_tgl_tran',
         'tanggal' => 'TglTerima',
     ];
 
@@ -110,11 +108,7 @@ class RiwayatPencairanController extends Controller
                     continue;
                 }
 
-                if ($key === 'dari_tgl_tran') {
-                    $query->where($key, '>=', $date->format('Y-m-d'));
-                } elseif ($key === 'akhir_tgl_tran') {
-                    $query->where($key, '<=', $date->format('Y-m-d'));
-                } elseif ($key === 'TglTerima') {
+                if ($key === 'TglTerima') {
                     $query->whereDate($key, '=', $date->format('Y-m-d'));
                 }
             }
@@ -218,6 +212,11 @@ class RiwayatPencairanController extends Controller
 
             if ($username !== '' && in_array('NamaPenerima', $available, true)) {
                 $q->orWhere('NamaPenerima', 'like', '%' . $username . '%');
+                $applied = true;
+            }
+
+            if ($username !== '' && in_array('KDMERCAN', $available, true)) {
+                $q->orWhereRaw('TRIM(KDMERCAN) = ?', [$username]);
                 $applied = true;
             }
 

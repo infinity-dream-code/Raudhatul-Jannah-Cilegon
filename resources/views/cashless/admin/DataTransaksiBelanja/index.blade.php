@@ -196,7 +196,7 @@
                                         <option value="all">Semua</option>
                                         @isset($kelas)
                                             @foreach($kelas as $item)
-                                                <option value="{{$item->jenjang}}">{{$item->unit}} - {{$item->kelas}} {{$item->jenjang}}</option>
+                                                <option value="{{$item->unit}}~~{{$item->jenjang}}~~{{$item->kelas}}">{{$item->unit}} - {{$item->jenjang}} {{$item->kelas}}</option>
                                             @endforeach
                                         @else
                                             <option>data kosong</option>
@@ -225,7 +225,7 @@
             <div class="export-button-container">
                 <button type="button" id="btn-export" class="btn btn-success btn-export">
                     <i class="ri-file-excel-line me-2"></i>
-                    Export ke CSV
+                    Export ke Excel
                 </button>
             </div>
             <table class="table table-sm table-bordered table-hover" id="main_table">

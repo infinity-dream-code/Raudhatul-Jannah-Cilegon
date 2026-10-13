@@ -69,6 +69,7 @@
                 <tr>
                     <th class="text-center" style="width:60px;">No</th>
                     <th>Periode</th>
+                    <th class="text-end">Limit Jajan Harian</th>
                     <th class="text-end">Batas Utang</th>
                     <th>Kelompok Kantin</th>
                     <th class="text-center">Status</th>
@@ -80,7 +81,8 @@
                     <tr>
                         <td class="text-center">{{ $rows->firstItem() + $loop->index }}</td>
                         <td>{{ $item->periode ?: '-' }}</td>
-                        <td class="text-end">{{ number_format((float) ($item->batasan_utang ?? 0), 0, ',', '.') }}</td>
+                        <td class="text-end">{{ (float) ($item->batas_belanja_hari ?? 0) > 0 ? number_format((float) $item->batas_belanja_hari, 0, ',', '.') : 'Tanpa limit' }}</td>
+                        <td class="text-end">{{ (float) ($item->batasan_utang ?? 0) > 0 ? '-' . number_format((float) $item->batasan_utang, 0, ',', '.') : '0' }}</td>
                         <td>{{ $item->kelompok_kantin ?: '-' }}</td>
                         <td class="text-center">
                             @if((int) $item->aktif === 1)
@@ -94,6 +96,7 @@
                                     class="btn btn-sm btn-primary btn-edit"
                                     data-id="{{ $item->urut }}"
                                     data-periode="{{ $item->periode }}"
+                                    data-batas_belanja_hari="{{ $item->batas_belanja_hari ?? 0 }}"
                                     data-batasan_utang="{{ $item->batasan_utang ?? 0 }}"
                                     data-aktif="{{ (int) $item->aktif }}"
                                     data-kelompok_kantin="{{ $item->kelompok_kantin }}">
@@ -103,7 +106,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">Belum ada data setting batasan.</td>
+                        <td colspan="7" class="text-center text-muted py-4">Belum ada data setting batasan.</td>
                     </tr>
                 @endforelse
                 </tbody>
@@ -132,6 +135,12 @@
                             <label class="form-label required" for="form_periode">Periode</label>
                             <input type="text" class="form-control" id="form_periode" name="periode" maxlength="50"
                                    required placeholder="Contoh: 2026 atau 2026-08">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label required" for="form_batas_belanja_hari">Limit Jajan Harian</label>
+                            <input type="number" class="form-control" id="form_batas_belanja_hari"
+                                   name="batas_belanja_hari" min="0" step="1" required placeholder="0">
+                            <div class="form-text">Maksimal jajan per hari yang dibayar dari saldo. Jajan pakai utang tidak dihitung. Isi 0 = tanpa limit harian.</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label required" for="form_batasan_utang">Batas Utang</label>
@@ -206,6 +215,7 @@
                 titleEl.textContent = 'Edit Setting Batasan';
                 idEl.value = btn.dataset.id || '';
                 document.getElementById('form_periode').value = btn.dataset.periode || '';
+                document.getElementById('form_batas_belanja_hari').value = btn.dataset.batas_belanja_hari || 0;
                 document.getElementById('form_batasan_utang').value = btn.dataset.batasan_utang || 0;
                 document.getElementById('form_kelompok_kantin').value = btn.dataset.kelompok_kantin || '';
                 document.getElementById('form_aktif').value = String(btn.dataset.aktif ?? '1');
@@ -225,6 +235,7 @@
                 const id = idEl.value;
                 const payload = {
                     periode: document.getElementById('form_periode').value,
+                    batas_belanja_hari: document.getElementById('form_batas_belanja_hari').value,
                     batasan_utang: document.getElementById('form_batasan_utang').value,
                     kelompok_kantin: document.getElementById('form_kelompok_kantin').value,
                     aktif: document.getElementById('form_aktif').value,

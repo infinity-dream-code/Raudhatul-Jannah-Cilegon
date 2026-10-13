@@ -77,6 +77,7 @@
 
                     <div class="sc-actions">
                         <a href="{{ route('smartcard.transaksi_belanja') }}" class="sc-btn">Reset</a>
+                        <button type="submit" formaction="{{ route('smartcard.transaksi_belanja.export') }}" class="sc-btn sc-btn-success">Export Excel</button>
                         <button type="submit" class="sc-btn sc-btn-primary">Cari</button>
                     </div>
                 </form>

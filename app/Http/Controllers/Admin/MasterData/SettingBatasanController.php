@@ -64,7 +64,6 @@ class SettingBatasanController extends Controller
 
             $latest = SmBatasan::query()->orderByDesc('urut')->first();
             SmBatasan::create($this->payload($request) + [
-                'batas_belanja_hari' => (float) ($latest->batas_belanja_hari ?? 0),
                 'batas_cash' => (float) ($latest->batas_cash ?? 0),
             ]);
 
@@ -122,6 +121,7 @@ class SettingBatasanController extends Controller
             $request->all(),
             [
                 'periode' => ['required', 'string', 'max:50'],
+                'batas_belanja_hari' => ['required', 'numeric', 'min:0'],
                 'batasan_utang' => ['required', 'numeric', 'min:0'],
                 'aktif' => ['required', 'in:0,1'],
                 'kelompok_kantin' => ['nullable', 'string', 'max:100'],
@@ -129,6 +129,7 @@ class SettingBatasanController extends Controller
             ValidationMessage::messages(),
             [
                 'periode' => 'Periode',
+                'batas_belanja_hari' => 'Limit Jajan Harian',
                 'batasan_utang' => 'Batas Utang',
                 'aktif' => 'Status Aktif',
                 'kelompok_kantin' => 'Kelompok Kantin',
@@ -137,13 +138,13 @@ class SettingBatasanController extends Controller
     }
 
     /**
-     * batas_belanja_hari & batas_cash disembunyikan dari form, tapi tetap dipakai
-     * VPSPaymentBUY sebagai limit harian, jadi nilainya tidak boleh ikut ditimpa.
+     * batas_cash disembunyikan dari form, jadi nilainya tidak ikut ditimpa saat update.
      */
     private function payload(Request $request): array
     {
         return [
             'periode' => trim((string) $request->input('periode')),
+            'batas_belanja_hari' => (float) $request->input('batas_belanja_hari', 0),
             'batasan_utang' => (float) $request->input('batasan_utang', 0),
             'aktif' => (int) $request->input('aktif'),
             'kelompok_kantin' => trim((string) $request->input('kelompok_kantin', '')) ?: null,

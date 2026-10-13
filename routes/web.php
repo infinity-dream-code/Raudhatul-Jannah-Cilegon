@@ -270,6 +270,7 @@ Route::prefix('smartcard')
         Route::get('/data-kartu-siswa/siswa-search', [\App\Http\Controllers\Smartcard\DataKartuSiswaController::class, 'searchSiswa'])->name('data_kartu.siswa_search');
 
         Route::get('/transaksi-belanja', [\App\Http\Controllers\Smartcard\TransaksiBelanjaController::class, 'index'])->name('transaksi_belanja');
+        Route::get('/transaksi-belanja/export', [\App\Http\Controllers\Smartcard\TransaksiBelanjaController::class, 'export'])->name('transaksi_belanja.export');
 
         Route::get('/rekap-pencairan-kantin', [\App\Http\Controllers\Smartcard\RekapPencairanKantinController::class, 'index'])->name('rekap_pencairan_kantin');
         Route::post('/rekap-pencairan-kantin', [\App\Http\Controllers\Smartcard\RekapPencairanKantinController::class, 'store'])->name('rekap_pencairan_kantin.store');
@@ -334,6 +335,8 @@ Route::prefix('cashless')->name('cashless.')->group(function () {
             Route::prefix('cek-saldo')->name('cek-saldo.')->group(function () {
                 Route::get('/', [\App\Http\Controllers\Cashless\CekSaldoController::class, 'index'])->name('index');
                 Route::post('/get-data', [\App\Http\Controllers\Cashless\CekSaldoController::class, 'getData'])->name('get-data');
+                Route::get('/face-references', [\App\Http\Controllers\Cashless\CekSaldoController::class, 'faceReferences'])->name('face-references');
+                Route::post('/get-data-nis', [\App\Http\Controllers\Cashless\CekSaldoController::class, 'getDataByNis'])->name('get-data-nis');
             });
 
             Route::prefix('manajemen-admin')

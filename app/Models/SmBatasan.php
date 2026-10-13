@@ -29,4 +29,13 @@ class SmBatasan extends Model
         'batasan_utang' => 'float',
         'aktif' => 'integer',
     ];
+
+    public static function activeBatasanUtang(): int
+    {
+        try {
+            return (int) (static::query()->where('aktif', 1)->orderByDesc('urut')->value('batasan_utang') ?? 0);
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
 }

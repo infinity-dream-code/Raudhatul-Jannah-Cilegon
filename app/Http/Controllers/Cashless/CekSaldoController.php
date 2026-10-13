@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Cashless;
 
 use App\Http\Controllers\Controller;
+use App\Models\SmBatasan;
 use App\Models\ValidationMessage;
+use App\Support\FacePay\FaceStudentRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -21,11 +24,105 @@ class CekSaldoController extends Controller
         Cache::add(Str::slug($this->cacheKey) . '_cache_version', 1);
     }
 
-    public function index()
+    public function index(FaceStudentRepository $faceRepo)
     {
+        $isSiswa = $this->isSiswa();
+
         return view('cashless.admin.cek_saldo.index', [
             'title' => $this->title,
+            'isSiswa' => $isSiswa,
+            'faceDbReady' => $isSiswa ? false : $faceRepo->pingStatus()['ok'],
         ]);
+    }
+
+    public function faceReferences(FaceStudentRepository $faceRepo): JsonResponse
+    {
+        if ($this->isSiswa()) {
+            return response()->json(['ok' => false, 'error' => 'Akses ditolak untuk role ini.'], 403);
+        }
+
+        if (!$faceRepo->pingStatus()['ok']) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Layanan FacePay sementara tidak tersedia. Hubungi admin ICT.',
+            ], 502);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => $faceRepo->listWithFoto(),
+        ]);
+    }
+
+    public function getDataByNis(Request $request): JsonResponse
+    {
+        if ($this->isSiswa()) {
+            return response()->json(['message' => 'Akses ditolak untuk role ini.'], 403);
+        }
+
+        $nis = preg_replace('/\D/', '', (string) $request->input('nis'));
+        if ($nis === '') {
+            return response()->json(['message' => 'NIS tidak valid'], 422);
+        }
+
+        try {
+            $siswa = DB::connection('DATA_MYSQL')
+                ->table('scctcust')
+                ->select(['CUSTID', 'NMCUST as nmcust', 'NOCUST as nocust'])
+                ->whereRaw('TRIM(NOCUST) = ?', [$nis])
+                ->first();
+
+            if (!$siswa) {
+                return response()->json(['message' => 'Siswa tidak ditemukan di cashless'], 422);
+            }
+
+            $pid = DB::connection('DATA_MYSQL')
+                ->table('sm_pin')
+                ->where('CUSTID', $siswa->CUSTID)
+                ->value('PID');
+            $tapId = $pid ? trim((string) $pid) : $nis;
+
+            return response()->json($this->buildResponse($siswa, $tapId), 200);
+        } catch (\Throwable $e) {
+            Log::error('CekSaldo - getDataByNis error', ['nis' => $nis, 'message' => $e->getMessage()]);
+
+            return response()->json(['message' => 'gagal mendapatkan data saldo, silahkan coba lagi'], 422);
+        }
+    }
+
+    private function isSiswa(): bool
+    {
+        return strtolower((string) session('cashless_user.role')) === 'siswa';
+    }
+
+    private function buildResponse(object $siswa, string $tapId): array
+    {
+        $nama = (string) ($siswa->nmcust ?? '');
+        $nis = (string) ($siswa->nocust ?? '');
+        $saldo = $this->resolveSaldo($tapId, (string) $siswa->CUSTID, $nama);
+
+        $transaksi = DB::connection('DATA_MYSQL')
+            ->table('scctcashout')
+            ->where('CUSTID', $siswa->CUSTID)
+            ->orderByDesc('TanggalKeluar')
+            ->limit(10)
+            ->get(['TanggalKeluar', 'BILLAM', 'Teller'])
+            ->map(function ($row) {
+                return [
+                    'tanggal' => $row->TanggalKeluar,
+                    'nominal' => (float) $row->BILLAM,
+                    'merchant' => $row->Teller,
+                ];
+            })
+            ->values();
+
+        return [
+            'saldo' => $saldo,
+            'batasan_limit' => SmBatasan::activeBatasanUtang(),
+            'nama' => $nama,
+            'nis' => $nis,
+            'transaksi' => $transaksi,
+        ];
     }
 
     public function getData(Request $request)
@@ -68,33 +165,7 @@ class CekSaldoController extends Controller
                 ], 422);
             }
 
-            $nama = (string) ($siswa->nmcust ?? '');
-            $nis = (string) ($siswa->nocust ?? '');
-            $saldo = $this->resolveSaldo($tapId, (string) $siswa->CUSTID, $nama);
-            $limitJajan = 20000;
-
-            $transaksi = DB::connection('DATA_MYSQL')
-                ->table('scctcashout')
-                ->where('CUSTID', $siswa->CUSTID)
-                ->orderByDesc('TanggalKeluar')
-                ->limit(10)
-                ->get(['TanggalKeluar', 'BILLAM', 'Teller'])
-                ->map(function ($row) {
-                    return [
-                        'tanggal' => $row->TanggalKeluar,
-                        'nominal' => (float) $row->BILLAM,
-                        'merchant' => $row->Teller,
-                    ];
-                })
-                ->values();
-
-            return response()->json([
-                'saldo' => $saldo,
-                'limit_jajan' => $limitJajan,
-                'nama' => $nama,
-                'nis' => $nis,
-                'transaksi' => $transaksi,
-            ], 200);
+            return response()->json($this->buildResponse($siswa, $tapId), 200);
         } catch (\Exception $e) {
             Log::error('CekSaldo - Error:', [
                 'message' => $e->getMessage(),

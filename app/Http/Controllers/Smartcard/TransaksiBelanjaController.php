@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Smartcard;
 
+use App\Exports\TransaksiBelanjaExport;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TransaksiBelanjaController extends Controller
 {
@@ -16,14 +18,7 @@ class TransaksiBelanjaController extends Controller
     public function index(Request $request): View
     {
         $isSearch = $request->boolean('search');
-        $filters = [
-            'angkatan' => trim((string) $request->query('angkatan', '')),
-            'nis' => trim((string) $request->query('nis', '')),
-            'nama' => trim((string) $request->query('nama', '')),
-            'dari_tanggal' => trim((string) $request->query('dari_tanggal', '')),
-            'sampai_tanggal' => trim((string) $request->query('sampai_tanggal', '')),
-            'kelas_id' => trim((string) $request->query('kelas_id', '')),
-        ];
+        $filters = $this->filtersFromRequest($request);
 
         $thnAka = $this->fetchThnAka();
         $kelasOptions = $this->fetchKelasOptions();
@@ -45,6 +40,53 @@ class TransaksiBelanjaController extends Controller
             'thnAka' => $thnAka,
             'kelasOptions' => $kelasOptions,
         ]);
+    }
+
+    public function export(Request $request)
+    {
+        $filters = $this->filtersFromRequest($request);
+
+        $rows = $this->selectRows($this->baseQuery($filters))->get();
+
+        $info = [];
+        if ($filters['angkatan'] !== '') {
+            $info[] = 'Angkatan: ' . angkatan_label($filters['angkatan']);
+        }
+        if ($filters['kelas_id'] !== '') {
+            $kelas = collect($this->fetchKelasOptions())->firstWhere('id', (int) $filters['kelas_id']);
+            if ($kelas) {
+                $info[] = 'Kelas: ' . implode(' - ', array_filter([
+                    trim((string) ($kelas->unit ?? '')),
+                    trim((string) ($kelas->jenjang ?? '')),
+                    trim((string) ($kelas->kelas ?? '')),
+                ]));
+            }
+        }
+        if ($filters['nis'] !== '') {
+            $info[] = 'NIS: ' . $filters['nis'];
+        }
+        if ($filters['nama'] !== '') {
+            $info[] = 'Nama: ' . $filters['nama'];
+        }
+        if ($filters['dari_tanggal'] !== '' || $filters['sampai_tanggal'] !== '') {
+            $info[] = 'Periode: ' . ($filters['dari_tanggal'] ?: '-') . ' s/d ' . ($filters['sampai_tanggal'] ?: '-');
+        }
+
+        $filename = 'Transaksi_Belanja_' . date('Y-m-d_His') . '.xlsx';
+
+        return Excel::download(new TransaksiBelanjaExport($rows, $info), $filename);
+    }
+
+    private function filtersFromRequest(Request $request): array
+    {
+        return [
+            'angkatan' => trim((string) $request->query('angkatan', '')),
+            'nis' => trim((string) $request->query('nis', '')),
+            'nama' => trim((string) $request->query('nama', '')),
+            'dari_tanggal' => trim((string) $request->query('dari_tanggal', '')),
+            'sampai_tanggal' => trim((string) $request->query('sampai_tanggal', '')),
+            'kelas_id' => trim((string) $request->query('kelas_id', '')),
+        ];
     }
 
   /**
@@ -201,7 +243,14 @@ class TransaksiBelanjaController extends Controller
 
     private function fetchRows(array $filters): LengthAwarePaginator
     {
-        return $this->baseQuery($filters)
+        return $this->selectRows($this->baseQuery($filters))
+            ->paginate(self::PER_PAGE)
+            ->withQueryString();
+    }
+
+    private function selectRows($query)
+    {
+        return $query
             ->select([
                 'scctcust.NMCUST as nama',
                 'scctcust.NOCUST as nis',
@@ -212,9 +261,7 @@ class TransaksiBelanjaController extends Controller
                 'scctcust.DESC03 as kelompok',
             ])
             ->orderByDesc('scctcashout.TanggalKeluar')
-            ->orderByDesc('scctcashout.urut')
-            ->paginate(self::PER_PAGE)
-            ->withQueryString();
+            ->orderByDesc('scctcashout.urut');
     }
 
     private function sumDebet(array $filters): float

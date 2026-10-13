@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Cashless;
 
+use App\Exports\CashlessTransaksiBelanjaExport;
 use App\Http\Controllers\Controller;
 use App\Support\CacheHandler;
 use App\Support\FilterHandler;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DataTransaksiBelanjaController extends Controller
 {
@@ -215,64 +217,9 @@ class DataTransaksiBelanjaController extends Controller
             ->select($select)
             ->get();
 
-        $totalAmount = $data->sum('DEBET');
+        $filename = 'Data_Transaksi_Belanja_' . date('Y-m-d_His') . '.xlsx';
 
-        $filename = 'Data_Transaksi_Belanja_' . date('Y-m-d_His') . '.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0',
-        ];
-
-        $callback = function () use ($data, $totalAmount) {
-            $file = fopen('php://output', 'w');
-
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
-
-            fputcsv($file, ['No', 'NIS', 'NAMA', 'TANGGAL', 'DEBET', 'KETERANGAN', 'MERCHANT', 'UNIT', 'KELAS', 'KELOMPOK'], ';');
-
-            $no = 1;
-            foreach ($data as $row) {
-                $tanggal = $row->TANGGAL
-                    ? Carbon::parse($row->TANGGAL)->format('d-m-Y H:i')
-                    : '';
-
-                fputcsv($file, [
-                    $no++,
-                    $row->NIS,
-                    $row->NAMA,
-                    $tanggal,
-                    $row->DEBET,
-                    $row->KETERANGAN ?? '',
-                    $row->MERCHANT,
-                    $row->UNIT,
-                    $row->KELAS,
-                    $row->KELOMPOK,
-                ], ';');
-            }
-
-            fputcsv($file, [], ';');
-
-            fputcsv($file, [
-                '',
-                '',
-                'TOTAL PEMBAYARAN',
-                '',
-                $totalAmount,
-                '',
-                '',
-                '',
-                '',
-                '',
-            ], ';');
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(new CashlessTransaksiBelanjaExport($data), $filename);
     }
 
     public function getData(Request $request)

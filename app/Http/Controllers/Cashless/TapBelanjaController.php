@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cashless;
 
 use App\Http\Controllers\Controller;
+use App\Models\SmBatasan;
 use App\Models\ValidationMessage;
 use App\Support\FacePay\FaceKantinBelanjaLog;
 use App\Support\FacePay\FaceStudentRepository;
@@ -88,6 +89,7 @@ class TapBelanjaController extends Controller
                     'tap_id' => $resolved['tap_id'],
                     'nama' => $nama,
                     'saldo' => $saldo,
+                    'batasan_utang' => SmBatasan::activeBatasanUtang(),
                     'siswaId' => (string) $request->input('siswaId', ''),
                 ],
             ]);
@@ -224,6 +226,7 @@ class TapBelanjaController extends Controller
             // Format yang diharapkan frontend: [tap_id, saldo, nama]
             return response()->json([
                 'data' => [$tapId, (string) $saldo, $nama],
+                'batasan_utang' => SmBatasan::activeBatasanUtang(),
             ]);
         } catch (\Exception $e) {
             Log::error('getSaldo - Error:', [
@@ -351,7 +354,7 @@ class TapBelanjaController extends Controller
 
             $result = DB::connection('DATA_MYSQL')
                 ->select(
-                    'SELECT VPSPaymentBUY(?,?,?) AS result',
+                    'SELECT VPSPaymentBUY2(?,?,?) AS result',
                     [
                         $resolvedPay['nocust'],
                         $nominal,
@@ -410,7 +413,7 @@ class TapBelanjaController extends Controller
     }
 
     /**
-     * VPSPaymentBUY memakai NOCUST (bukan sm_pin.PID).
+     * VPSPaymentBUY2 memakai NOCUST (bukan sm_pin.PID).
      * Input boleh PID kartu atau NOCUST/NIS.
      *
      * @return array{nocust: string, cust_id: string, nama: string}|null
@@ -500,7 +503,7 @@ class TapBelanjaController extends Controller
     }
 
     /**
-     * Simpan keterangan ke baris scctcashout terbaru setelah VPSPaymentBUY sukses.
+     * Simpan keterangan ke baris scctcashout terbaru setelah VPSPaymentBUY2 sukses.
      */
     private function applyKeteranganByCustId(string $custId, string $keterangan): void
     {

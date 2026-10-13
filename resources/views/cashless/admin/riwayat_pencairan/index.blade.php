@@ -64,29 +64,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col">
-                            <div class="mb-3 row">
-                                <label for="filter_dari_tanggal"
-                                       class="col-sm-4 col-form-label text-capitalize form-label">
-                                    transaksi dari tanggal</label>
-                                <div class="col">
-                                    <input type="text" class="form-control form-control"
-                                           placeholder="transaksi dari tanggal" id="filter_dari_tanggal"
-                                           name="filter[dari_tanggal]">
-                                </div>
-                            </div>
-
-                            <div class="mb-3 row">
-                                <label for="filter_sampai_tanggal"
-                                       class="col-sm-4 col-form-label text-capitalize form-label">
-                                    transaksi sampai tanggal</label>
-                                <div class="col">
-                                    <input type="text" class="form-control form-control"
-                                           placeholder="transaksi sampai tanggal" id="filter_sampai_tanggal"
-                                           name="filter[sampai_tanggal]">
-                                </div>
-                            </div>
-                        </div>
                     </div>
                     <div class="row">
                         <div class="d-flex justify-content-center justify-content-md-end gap-4">
@@ -179,33 +156,11 @@
                 });
             }
 
-            const tanggal = $('#filter_tanggal');
-            const dariTanggal = $('#filter_dari_tanggal');
-            const sampaiTanggal = $('#filter_sampai_tanggal');
-
-            tanggal.datepicker({
+            $('#filter_tanggal').datepicker({
                 format: "dd-mm-yyyy",
                 clearBtn: true,
                 language: 'id',
                 autoclose: true
-            });
-
-            dariTanggal.datepicker({
-                format: "dd-mm-yyyy",
-                autoclose: true,
-                language: 'id',
-                clearBtn: true
-            }).on('changeDate', function (e) {
-                sampaiTanggal.datepicker('setStartDate', e.date);
-            });
-
-            sampaiTanggal.datepicker({
-                format: "dd-mm-yyyy",
-                autoclose: true,
-                language: 'id',
-                clearBtn: true
-            }).on('changeDate', function (e) {
-                dariTanggal.datepicker('setEndDate', e.date);
             });
         });
     </script>

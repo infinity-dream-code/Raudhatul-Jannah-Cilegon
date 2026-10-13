@@ -174,12 +174,17 @@
     }
 
     var sisa = pendingPay.saldo - nominal;
+    var batasUtang = Number(pendingPay.batasanUtang) || 0;
+    var melebihiUtang = sisa < -batasUtang;
     if (sisaEl) {
       if (nominal < NOMINAL_MIN) {
         sisaEl.textContent = "—";
-      } else if (sisa < 0) {
-        sisaEl.textContent = "Tidak cukup";
+      } else if (melebihiUtang) {
+        sisaEl.textContent = batasUtang > 0 ? "Melebihi batas utang" : "Tidak cukup";
         sisaEl.classList.add("k-modal__sisa--bad");
+      } else if (sisa < 0) {
+        sisaEl.textContent = "-Rp " + formatRupiah(Math.abs(sisa)) + " (utang)";
+        sisaEl.classList.remove("k-modal__sisa--bad");
       } else {
         sisaEl.textContent = "Rp " + formatRupiah(sisa);
         sisaEl.classList.remove("k-modal__sisa--bad");
@@ -195,12 +200,14 @@
       return;
     }
 
-    // Kantin = selalu pengurangan: nominal tidak boleh melebihi saldo
-    if (pendingPay.saldo < nominal) {
+    if (melebihiUtang) {
       if (conf) conf.disabled = true;
       if (err) {
         err.hidden = false;
-        err.textContent = "Saldo tidak cukup untuk pengurangan ini.";
+        err.textContent =
+          batasUtang > 0
+            ? "Nominal melebihi saldo + batas utang (Rp " + formatRupiah(batasUtang) + ")."
+            : "Saldo tidak cukup untuk pengurangan ini.";
       }
       return;
     }
@@ -644,6 +651,7 @@
         if (!pendingPay || pendingPay.nokartu !== nokartu) return;
         var data = (body && body.data) || {};
         pendingPay.saldo = Number(data.saldo) || 0;
+        pendingPay.batasanUtang = Number(data.batasan_utang) || 0;
         if (data.nama) {
           pendingPay.nama = data.nama;
           if (namaEl) namaEl.textContent = data.nama;
@@ -671,8 +679,11 @@
       toast("Nominal minimal Rp " + formatRupiah(NOMINAL_MIN), "warn");
       return;
     }
-    if (pendingPay.saldo != null && pendingPay.saldo < nominal) {
-      toast("Saldo tidak cukup untuk pengurangan", "warn");
+    if (
+      pendingPay.saldo != null &&
+      pendingPay.saldo - nominal < -(Number(pendingPay.batasanUtang) || 0)
+    ) {
+      toast("Saldo + batas utang tidak cukup", "warn");
       return;
     }
 
@@ -741,6 +752,14 @@
   }
 
   function onMatch(siswa) {
+    var customOnMatch = cashlessFaceCfg().onMatch;
+    if (typeof customOnMatch === "function") {
+      if (!canAnnounce(siswa.id)) return;
+      stopCamera();
+      setStatus("<strong>Wajah cocok:</strong> " + escapeHtml(siswa.nama || "Siswa"), "ok");
+      customOnMatch(siswa);
+      return;
+    }
     var hint = $("kantin-hint");
     if (hint) {
       hint.textContent = "Wajah cocok: " + (siswa.nama || "Siswa") + ". Menyiapkan konfirmasi…";
@@ -855,7 +874,12 @@
       .then(function (s) {
         stream = s;
         detectTimer = window.setInterval(runDetect, DETECT_MS);
-        setStatus("<strong>Kamera aktif.</strong> Hadapkan wajah siswa — nominal diisi di modal.", "ok");
+        setStatus(
+          typeof cashlessFaceCfg().onMatch === "function"
+            ? "<strong>Kamera aktif.</strong> Hadapkan wajah siswa."
+            : "<strong>Kamera aktif.</strong> Hadapkan wajah siswa — nominal diisi di modal.",
+          "ok"
+        );
         var btnStart = $("kantin-cam-start");
         var btnStop = $("kantin-cam-stop");
         var btnFlip = $("kantin-cam-flip");
@@ -974,6 +998,16 @@
     reloadReferences: function () {
       return buildRefs(true);
     },
+    startCamera: function () {
+      if (!modelsReady) return Promise.reject(new Error("models not ready"));
+      if (!refs.length) {
+        return buildRefs().then(function (n) {
+          if (n) return startCamera();
+        });
+      }
+      return startCamera();
+    },
+    stopCamera: stopCamera,
   };
 
   if (document.readyState === "loading") {

@@ -25,12 +25,12 @@
                             <input type="hidden" name="nominal" value="{{ $nominal ?? '' }}">
 
                             <div class="sc-field">
-                                <label for="kdMercan">Merchan</label>
+                                <label for="kdMercan">Kantin</label>
                                 <div class="sc-control-wrap sc-control-select">
-                                    <select id="kdMercan" name="kd_mercan">
-                                        <option value="">Pilih Merchan</option>
-                                        @foreach ($mercanOptions as $m)
-                                            <option value="{{ $m->kode }}" @selected(($kdMercan ?? '') === $m->kode)>{{ $m->nama }}</option>
+                                    <select id="kdMercan" name="kantin">
+                                        <option value="">{{ empty($kantinOptions) ? 'Belum ada data kantin' : 'Pilih Kantin' }}</option>
+                                        @foreach ($kantinOptions as $k)
+                                            <option value="{{ $k->kode }}" @selected(($kantinUsername ?? '') === $k->kode)>{{ $k->nama }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -56,7 +56,7 @@
                     <div class="rp-builder-col rp-builder-col-right">
                         <form method="POST" action="{{ route('smartcard.rekap_pencairan_kantin.store') }}" id="rpFormSave" class="rp-inner-form">
                             @csrf
-                            <input type="hidden" name="kd_mercan" id="kdMercanSave" value="{{ $kdMercan ?? '' }}">
+                            <input type="hidden" name="kantin" id="kdMercanSave" value="{{ $kantinUsername ?? '' }}">
                             <input type="hidden" name="dari_tanggal" id="dariTanggalSave" value="{{ $dariTanggal ?? '' }}">
                             <input type="hidden" name="sampai_tanggal" id="sampaiTanggalSave" value="{{ $sampaiTanggal ?? '' }}">
 
@@ -139,7 +139,9 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @if ($liatPencairan ?? false)
+                                    @if (($liatPencairan ?? false) && ($pencairanError ?? false))
+                                        <tr><td colspan="2" class="sc-empty">Gagal memuat data pencairan. Silakan coba lagi.</td></tr>
+                                    @elseif ($liatPencairan ?? false)
                                         @forelse (($pencairanRows ?? collect()) as $row)
                                             <tr>
                                                 <td>
