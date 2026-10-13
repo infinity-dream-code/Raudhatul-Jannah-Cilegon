@@ -89,9 +89,8 @@ class TapBelanjaController extends Controller
                     'tap_id' => $resolved['tap_id'],
                     'nama' => $nama,
                     'saldo' => $saldo,
-                    'batasan_utang' => SmBatasan::activeBatasanUtang(),
                     'siswaId' => (string) $request->input('siswaId', ''),
-                ],
+                ] + SmBatasan::limitInfoFor($resolved['cust_id']),
             ]);
         } catch (\Throwable $e) {
             Log::error('getSaldoByNis', ['nis' => $nis, 'error' => $e->getMessage()]);
@@ -226,8 +225,7 @@ class TapBelanjaController extends Controller
             // Format yang diharapkan frontend: [tap_id, saldo, nama]
             return response()->json([
                 'data' => [$tapId, (string) $saldo, $nama],
-                'batasan_utang' => SmBatasan::activeBatasanUtang(),
-            ]);
+            ] + SmBatasan::limitInfoFor((string) $siswa->CUSTID));
         } catch (\Exception $e) {
             Log::error('getSaldo - Error:', [
                 'message' => $e->getMessage(),

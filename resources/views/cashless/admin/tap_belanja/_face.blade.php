@@ -38,6 +38,10 @@
                     <dd class="col-sm-8" id="kantin-pay-nama">—</dd>
                     <dt class="col-sm-4">Saldo</dt>
                     <dd class="col-sm-8" id="kantin-pay-saldo">—</dd>
+                    <dt class="col-sm-4">Limit harian</dt>
+                    <dd class="col-sm-8" id="kantin-pay-limit">—</dd>
+                    <dt class="col-sm-4">Sisa limit hari ini</dt>
+                    <dd class="col-sm-8" id="kantin-pay-sisa-limit">—</dd>
                     <dt class="col-sm-4">Sisa setelah potong</dt>
                     <dd class="col-sm-8" id="kantin-pay-sisa">—</dd>
                 </dl>

@@ -212,6 +212,17 @@
       return;
     }
 
+    var bagianSaldo = Math.min(nominal, Math.max(pendingPay.saldo, 0));
+    if (pendingPay.sisaLimit != null && bagianSaldo > pendingPay.sisaLimit) {
+      if (conf) conf.disabled = true;
+      if (err) {
+        err.hidden = false;
+        err.textContent =
+          "Melebihi sisa limit harian (Rp " + formatRupiah(pendingPay.sisaLimit) + ").";
+      }
+      return;
+    }
+
     if (err) {
       err.hidden = true;
       err.textContent = "";
@@ -636,6 +647,10 @@
     }
     var ketInp = $("kantin-pay-keterangan");
     if (ketInp) ketInp.value = "";
+    var limitElInit = $("kantin-pay-limit");
+    var sisaLimitElInit = $("kantin-pay-sisa-limit");
+    if (limitElInit) limitElInit.textContent = "Memuat…";
+    if (sisaLimitElInit) sisaLimitElInit.textContent = "Memuat…";
     if (conf) conf.disabled = true;
     if (err) {
       err.hidden = true;
@@ -652,6 +667,21 @@
         var data = (body && body.data) || {};
         pendingPay.saldo = Number(data.saldo) || 0;
         pendingPay.batasanUtang = Number(data.batasan_utang) || 0;
+        pendingPay.limitHarian = Number(data.limit_harian) || 0;
+        pendingPay.sisaLimit =
+          data.sisa_limit_harian === null || data.sisa_limit_harian === undefined
+            ? null
+            : Number(data.sisa_limit_harian) || 0;
+        var limitEl = $("kantin-pay-limit");
+        var sisaLimitEl = $("kantin-pay-sisa-limit");
+        if (limitEl) {
+          limitEl.textContent =
+            pendingPay.limitHarian > 0 ? "Rp " + formatRupiah(pendingPay.limitHarian) : "Tanpa limit";
+        }
+        if (sisaLimitEl) {
+          sisaLimitEl.textContent =
+            pendingPay.sisaLimit === null ? "Tanpa limit" : "Rp " + formatRupiah(pendingPay.sisaLimit);
+        }
         if (data.nama) {
           pendingPay.nama = data.nama;
           if (namaEl) namaEl.textContent = data.nama;

@@ -359,7 +359,7 @@
                 },
             };
         </script>
-        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261013b"></script>
+        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261013c"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 var nextBtn = document.getElementById('cek-saldo-face-next');

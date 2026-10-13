@@ -61,6 +61,20 @@
                             </div>
                             <div class="col mb-5">
                                 <div class="input-group">
+                                    <span class="input-group-text" style="width: 120px;">LIMIT HARIAN</span>
+                                    <input type="text" class="form-control form-control-lg" placeholder="LIMIT HARIAN"
+                                           id="limit_harian" readonly tabindex="-1">
+                                </div>
+                            </div>
+                            <div class="col mb-5">
+                                <div class="input-group">
+                                    <span class="input-group-text" style="width: 120px;">SISA LIMIT</span>
+                                    <input type="text" class="form-control form-control-lg" placeholder="SISA LIMIT HARI INI"
+                                           id="sisa_limit_harian" readonly tabindex="-1">
+                                </div>
+                            </div>
+                            <div class="col mb-5">
+                                <div class="input-group">
                                     <span class="input-group-text" style="width: 120px;">BELANJA</span>
                                     <input type="text" class="form-control form-control-lg formattedNumber"
                                            placeholder="BELANJA" name="belanja" id="belanja" aria-describedby="belanja" enterkeyhint="done" inputmode="numeric">
@@ -106,7 +120,7 @@
                 modelUrl: @json(asset('vendor/face-api/weights')),
             };
         </script>
-        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261013b"></script>
+        <script src="{{ asset('js/cashless/tap-belanja-face.js') }}?v=20261013c"></script>
         <script defer>
             document.addEventListener('DOMContentLoaded', function () {
                 var faceTab = document.getElementById('tab-face-btn');
@@ -174,6 +188,12 @@
                                 document.getElementById('belanja').setAttribute('max', Math.max(0, (Number(result[1]) || 0) + batasanUtang));
                                 document.getElementById('saldo').value = result[1];
                                 document.getElementById('nama').value = result[2];
+                                const limitHarian = Number(processForm.data.limit_harian) || 0;
+                                const sisaLimit = processForm.data.sisa_limit_harian;
+                                document.getElementById('limit_harian').value =
+                                    limitHarian > 0 ? formatRupiah(limitHarian) : 'Tanpa limit';
+                                document.getElementById('sisa_limit_harian').value =
+                                    (sisaLimit === null || sisaLimit === undefined) ? 'Tanpa limit' : formatRupiah(sisaLimit);
                                 currentIDStatus = true;
                                 Swal.close();
                             }
