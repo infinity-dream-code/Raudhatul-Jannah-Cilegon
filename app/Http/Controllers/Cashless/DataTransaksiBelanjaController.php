@@ -28,6 +28,7 @@ class DataTransaksiBelanjaController extends Controller
         'nama' => 'scctcust.NMCUST',
         'custid' => 'scctcust.CUSTID',
         'angkatan' => 'scctcust.DESC04',
+        'unit' => 'scctcust.CODE01',
     ];
 
     public function __construct()
@@ -58,7 +59,7 @@ class DataTransaksiBelanjaController extends Controller
         $data['totalUrl'] = '/cashless/admin/data-transaksi-belanja/get-total';
 
         try {
-            $data['thn_aka'] = DB::connection('DATA_MYSQL')->table('mst_thn_aka')->select(['thn_aka'])->where('thn_aka', '!=', null)->get();
+            $data['thn_aka'] = DB::connection('DATA_MYSQL')->table('mst_thn_aka')->select(['thn_aka'])->where('thn_aka', '!=', null)->orderBy('thn_aka')->get();
             Log::info('DataTransaksiBelanja - thn_aka fetched', ['count' => $data['thn_aka']->count()]);
         } catch (\Exception $e) {
             Log::error('DataTransaksiBelanja - Error fetching thn_aka', ['error' => $e->getMessage()]);
@@ -71,6 +72,17 @@ class DataTransaksiBelanjaController extends Controller
         } catch (\Exception $e) {
             Log::error('DataTransaksiBelanja - Error fetching kelas', ['error' => $e->getMessage()]);
             $data['kelas'] = collect([]);
+        }
+
+        try {
+            $sekolahQuery = DB::connection('DATA_MYSQL')->table('mst_sekolah')
+                ->whereNotNull('CODE01')
+                ->where('CODE01', '!=', '')
+                ->orderBy('CODE01');
+            $data['sekolah'] = $sekolahQuery->get(['CODE01', 'DESC01']);
+        } catch (\Exception $e) {
+            Log::error('DataTransaksiBelanja - Error fetching mst_sekolah', ['error' => $e->getMessage()]);
+            $data['sekolah'] = collect([]);
         }
 
         return view('cashless.admin.DataTransaksiBelanja.index', $data);
@@ -110,7 +122,7 @@ class DataTransaksiBelanjaController extends Controller
                 case 'scctcust.DESC02':
                     $val = explode("~~", $val);
                     if (count($val) == 3) {
-                        if (!collect($filters)->contains(fn($f) => $f[0] === 'scctcust.CODE02')) {
+                        if (!collect($filters)->contains(fn($f) => is_array($f) && $f[0] === 'scctcust.CODE02')) {
                             $filters[] = ["scctcust.CODE02", "=", $val[0]];
                         }
                         $filters[] = ['scctcust.DESC02', '=', $val[1]];
@@ -118,9 +130,27 @@ class DataTransaksiBelanjaController extends Controller
                     }
                     break;
                 case 'scctcust.CODE02':
-                    if (!collect($filters)->contains(fn($f) => $f[0] === 'scctcust.CODE02')) {
+                    if (!collect($filters)->contains(fn($f) => is_array($f) && $f[0] === 'scctcust.CODE02')) {
                         $filters[] = ["scctcust.CODE02", "=", $val];
                     }
+                    break;
+                case 'scctcust.CODE01':
+                    $filters[] = static function ($query) use ($val) {
+                        $query->whereRaw('TRIM(scctcust.CODE01) = ?', [trim((string) $val)]);
+                    };
+                    break;
+                case 'scctcust.DESC04':
+                    $full = trim((string) $val);
+                    $base = trim((string) preg_replace('#\s*-\s*.*$#', '', $full));
+                    $filters[] = static function ($query) use ($full, $base) {
+                        $query->where(function ($q) use ($full, $base) {
+                            $q->whereRaw('TRIM(scctcust.DESC04) = ?', [$full]);
+                            if ($base !== '' && $base !== $full) {
+                                $q->orWhereRaw('TRIM(scctcust.DESC04) = ?', [$base])
+                                    ->orWhereRaw("REPLACE(TRIM(scctcust.DESC04), ' ', '') LIKE ?", [str_replace(' ', '', $base) . '%']);
+                            }
+                        });
+                    };
                     break;
                 case 'scctcust.NMCUST':
                     $val = is_numeric($val) ? $val : '%' . $val . '%';
@@ -137,7 +167,9 @@ class DataTransaksiBelanjaController extends Controller
 
         return function ($query) use ($filters) {
             foreach ($filters as $filter) {
-                if (count($filter) === 3) {
+                if ($filter instanceof \Closure) {
+                    $filter($query);
+                } elseif (count($filter) === 3) {
                     $query->where($filter[0], $filter[1], $filter[2]);
                 } elseif (count($filter) === 4) {
                     if ($filter[3] == 'whereBetween') {

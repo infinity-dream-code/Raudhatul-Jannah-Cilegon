@@ -116,20 +116,16 @@
                     <div class="row">
                         <div class="col-lg-6">
                             <div class="mb-3 row">
-                                <label for="filter[tahun_akademik]" class="col-sm-4 col-form-label form-label">Tahun Akademik</label>
+                                <label for="filter[unit]" class="col-sm-4 col-form-label form-label">Unit</label>
                                 <div class="col">
-                                    <select class="form-select select2" id="filter[tahun_akademik]"
-                                            name="filter[tahun_akademik]"
+                                    <select class="form-select" id="filter[unit]"
+                                            name="filter[unit]"
                                             data-control="select2"
-                                            data-placeholder="Pilih Tahun Akademik">
+                                            data-placeholder="Pilih Unit">
                                         <option value="all">Semua</option>
-                                        @isset($thn_aka)
-                                            @foreach($thn_aka as $item)
-                                                <option value="{{$item->thn_aka}}">{{ angkatan_label($item->thn_aka) }}</option>
-                                            @endforeach
-                                        @else
-                                            <option>data kosong</option>
-                                        @endisset
+                                        @foreach(($sekolah ?? []) as $item)
+                                            <option value="{{ trim($item->CODE01) }}">{{ trim($item->DESC01 ?: $item->CODE01) }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -308,6 +304,7 @@
                     else if (key === 'filter[nis]') filters['nis'] = value;
                     else if (key === 'filter[nama]') filters['nama'] = value;
                     else if (key === 'filter[angkatan]') filters['angkatan'] = value;
+                    else if (key === 'filter[unit]') filters['unit'] = value;
                 }
             }
 
@@ -428,4 +425,5 @@
             });
         });
     </script>
+    @include('layouts.partials.angkatan_unit_script')
 @endsection
