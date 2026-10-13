@@ -23,8 +23,6 @@ class RiwayatPencairanController extends Controller
     private array $orderableColumns = [
         'Nominal' => 'Nominal',
         'TglTerima' => 'TglTerima',
-        'dari_tgl_tran' => 'dari_tgl_tran',
-        'akhir_tgl_tran' => 'akhir_tgl_tran',
     ];
 
     public function index()
@@ -42,10 +40,7 @@ class RiwayatPencairanController extends Controller
         return response()->json([
             ['data' => null, 'name' => 'no', 'columnType' => 'row', 'exportable' => true],
             ['data' => 'Nominal', 'name' => 'Nominal', 'searchable' => true, 'orderable' => true, 'exportable' => true, 'columnType' => 'currency'],
-            ['data' => 'TglTerima', 'name' => 'Tgl Pencairan', 'searchable' => true, 'orderable' => true, 'exportable' => true, 'columnType' => 'timestamp'],
-            ['data' => 'dari_tgl_tran', 'name' => 'Dari', 'searchable' => true, 'orderable' => true, 'exportable' => true, 'columnType' => 'date'],
-            ['data' => 'akhir_tgl_tran', 'name' => 'Sampai', 'searchable' => true, 'orderable' => true, 'exportable' => true, 'columnType' => 'date'],
-        ]);
+            ['data' => 'TglTerima', 'name' => 'Tgl Pencairan', 'searchable' => true, 'orderable' => true, 'exportable' => true, 'columnType' => 'timestamp'],        ]);
     }
 
     public function getData(Request $request)
@@ -82,7 +77,7 @@ class RiwayatPencairanController extends Controller
 
             $available = $this->availableColumns();
             $select = array_values(array_filter(
-                ['Nominal', 'TglTerima', 'dari_tgl_tran', 'akhir_tgl_tran', 'NamaPenerima', 'KDMERCAN'],
+                ['Nominal', 'TglTerima', 'NamaPenerima', 'KDMERCAN'],
                 fn ($col) => in_array($col, $available, true)
             ));
 
@@ -137,8 +132,6 @@ class RiwayatPencairanController extends Controller
                     return [
                         'Nominal' => $row->Nominal ?? null,
                         'TglTerima' => $row->TglTerima ?? null,
-                        'dari_tgl_tran' => $row->dari_tgl_tran ?? null,
-                        'akhir_tgl_tran' => $row->akhir_tgl_tran ?? null,
                     ];
                 })
                 ->values()

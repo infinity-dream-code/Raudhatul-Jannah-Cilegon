@@ -219,6 +219,13 @@ class TapBelanjaController extends Controller
                 ], 422);
             }
 
+            if ($this->isKartuBlokir($tapId)) {
+                return response()->json([
+                    'message' => 'Kartu terblokir, tidak bisa digunakan untuk belanja',
+                    'errors' => ['tap_id' => ['Kartu terblokir, tidak bisa digunakan untuk belanja']],
+                ], 422);
+            }
+
             $nama = (string) ($siswa->nmcust ?? '');
             $saldo = $this->resolveSaldo($tapId, (string) $siswa->CUSTID, $nama);
 
@@ -337,7 +344,9 @@ class TapBelanjaController extends Controller
 
         try {
             $nominal = str_replace('.', '', $request->belanja);
-            $resolvedPay = $this->resolveNocustForPayment((string) $request->tap_id);
+            $resolvedPay = $this->isKartuBlokir((string) $request->tap_id)
+                ? null
+                : $this->resolveNocustForPayment((string) $request->tap_id);
 
             if (!$resolvedPay) {
                 $config = self::STATUS_MAP['unknown_or_blocked_card'];
@@ -416,6 +425,20 @@ class TapBelanjaController extends Controller
      *
      * @return array{nocust: string, cust_id: string, nama: string}|null
      */
+    private function isKartuBlokir(string $pid): bool
+    {
+        $pid = trim($pid);
+        if ($pid === '') {
+            return false;
+        }
+
+        return DB::connection('DATA_MYSQL')
+            ->table('sm_pin')
+            ->where('PID', $pid)
+            ->whereRaw("TRIM(COALESCE(BLOKIR, '0')) = '1'")
+            ->exists();
+    }
+
     private function resolveNocustForPayment(string $raw): ?array
     {
         $raw = trim($raw);

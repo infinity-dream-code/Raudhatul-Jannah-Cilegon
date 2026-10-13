@@ -97,19 +97,34 @@
                                     <th>NIS</th>
                                     <th>Nama</th>
                                     <th>No Kartu</th>
+                                    <th style="width:150px;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse (($kartuRows ?? null) as $index => $row)
+                                    @php($isBlokir = trim((string) ($row->blokir ?? '0')) === '1')
                                     <tr>
                                         <td>{{ ($kartuRows->firstItem() ?? 0) + $index }}</td>
                                         <td>{{ $row->nis ?? '—' }}</td>
                                         <td>{{ $row->nama ?? '—' }}</td>
                                         <td>{{ $row->no_kartu ?? '—' }}</td>
+                                        <td>
+                                            <form method="POST" action="{{ route('smartcard.data_kartu.blokir') }}" class="sc-blokir-form"
+                                                  data-confirm="{{ $isBlokir ? 'Buka blokir' : 'Blokir' }} kartu {{ trim((string) $row->no_kartu) }} milik {{ $row->nama }}?">
+                                                @csrf
+                                                <input type="hidden" name="pid" value="{{ trim((string) $row->no_kartu) }}">
+                                                <input type="hidden" name="blokir" value="{{ $isBlokir ? '0' : '1' }}">
+                                                <label class="sc-switch" title="{{ $isBlokir ? 'Klik untuk buka blokir' : 'Klik untuk blokir' }}">
+                                                    <input type="checkbox" class="sc-blokir-toggle" @checked($isBlokir)>
+                                                    <span class="sc-switch-slider"></span>
+                                                    <span class="sc-switch-text {{ $isBlokir ? 'is-blokir' : '' }}">{{ $isBlokir ? 'Diblokir' : 'Aktif' }}</span>
+                                                </label>
+                                            </form>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="sc-empty">Data kartu tidak ditemukan.</td>
+                                        <td colspan="5" class="sc-empty">Data kartu tidak ditemukan.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -158,6 +173,42 @@
     </div>
 
     <style>
+        .sc-blokir-form { margin: 0; }
+        .sc-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            margin: 0;
+            position: relative;
+        }
+        .sc-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+        .sc-switch-slider {
+            width: 40px;
+            height: 22px;
+            border-radius: 999px;
+            background: #d1d5db;
+            position: relative;
+            transition: background .2s;
+            flex-shrink: 0;
+        }
+        .sc-switch-slider::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+            transition: transform .2s;
+        }
+        .sc-switch input:checked + .sc-switch-slider { background: #ef4444; }
+        .sc-switch input:checked + .sc-switch-slider::after { transform: translateX(18px); }
+        .sc-switch input:disabled + .sc-switch-slider { opacity: .6; }
+        .sc-switch-text { font-size: 13px; font-weight: 600; color: #047857; }
+        .sc-switch-text.is-blokir { color: #b91c1c; }
         .sc-page {
             max-width: 1100px;
             margin: 0 auto;
@@ -608,5 +659,17 @@
 
             syncSaveFields();
         })();
+
+        document.querySelectorAll('.sc-blokir-toggle').forEach(function (toggle) {
+            toggle.addEventListener('change', function () {
+                const form = toggle.closest('form');
+                if (!window.confirm(form.dataset.confirm)) {
+                    toggle.checked = !toggle.checked;
+                    return;
+                }
+                toggle.disabled = true;
+                form.submit();
+            });
+        });
     </script>
 @endsection

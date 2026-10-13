@@ -148,6 +148,37 @@ class DataKartuSiswaController extends Controller
             ->with('smartcard_success', 'Kartu ' . $noKartu . ' berhasil disimpan untuk ' . trim((string) ($siswa->NMCUST ?? '')) . '.');
     }
 
+    public function toggleBlokir(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'pid' => ['required', 'string', 'max:16'],
+            'blokir' => ['required', 'in:0,1'],
+        ]);
+
+        $pid = trim((string) $validated['pid']);
+        $blokir = (string) $validated['blokir'];
+
+        try {
+            $updated = DB::connection('DATA_MYSQL')
+                ->table('sm_pin')
+                ->where('PID', $pid)
+                ->update(['BLOKIR' => $blokir]);
+        } catch (\Throwable $e) {
+            Log::error('DataKartuSiswa toggleBlokir failed', ['pid' => $pid, 'message' => $e->getMessage()]);
+
+            return redirect()->back()->with('smartcard_error', 'Gagal mengubah status blokir kartu ' . $pid . '.');
+        }
+
+        if ($updated === 0 && !DB::connection('DATA_MYSQL')->table('sm_pin')->where('PID', $pid)->exists()) {
+            return redirect()->back()->with('smartcard_error', 'Kartu ' . $pid . ' tidak ditemukan.');
+        }
+
+        return redirect()->back()->with(
+            'smartcard_success',
+            'Kartu ' . $pid . ($blokir === '1' ? ' berhasil diblokir.' : ' berhasil dibuka blokirnya.')
+        );
+    }
+
     public function searchSiswa(Request $request): JsonResponse
     {
         $q = trim((string) $request->query('q', ''));
@@ -206,6 +237,7 @@ class DataKartuSiswaController extends Controller
                 'scctcust.NOCUST as nis',
                 'scctcust.NMCUST as nama',
                 'sm_pin.PID as no_kartu',
+                'sm_pin.BLOKIR as blokir',
             ]);
 
         SchoolScope::apply($query, 'scctcust');

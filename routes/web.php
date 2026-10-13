@@ -267,6 +267,7 @@ Route::prefix('smartcard')
     ->group(function () {
         Route::get('/data-kartu-siswa', [\App\Http\Controllers\Smartcard\DataKartuSiswaController::class, 'index'])->name('data_kartu');
         Route::post('/data-kartu-siswa', [\App\Http\Controllers\Smartcard\DataKartuSiswaController::class, 'store'])->name('data_kartu.store');
+        Route::post('/data-kartu-siswa/blokir', [\App\Http\Controllers\Smartcard\DataKartuSiswaController::class, 'toggleBlokir'])->name('data_kartu.blokir');
         Route::get('/data-kartu-siswa/siswa-search', [\App\Http\Controllers\Smartcard\DataKartuSiswaController::class, 'searchSiswa'])->name('data_kartu.siswa_search');
 
         Route::get('/transaksi-belanja', [\App\Http\Controllers\Smartcard\TransaksiBelanjaController::class, 'index'])->name('transaksi_belanja');

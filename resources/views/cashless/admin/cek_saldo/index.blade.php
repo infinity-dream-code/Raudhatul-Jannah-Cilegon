@@ -94,10 +94,17 @@
                                        id="saldo" readonly tabindex="-1">
                             </div>
                         </div>
+                        <div class="col mb-4">
+                            <div class="input-group">
+                                <span class="input-group-text" style="width: 200px;">Batasan Jajan Harian</span>
+                                <input type="text" class="form-control form-control-lg" placeholder="Batasan Jajan Harian"
+                                       id="limit_harian" readonly tabindex="-1">
+                            </div>
+                        </div>
                         <div class="col mb-2">
                             <div class="input-group">
-                                <span class="input-group-text" style="width: 200px;">Batasan Limit Belanja</span>
-                                <input type="text" class="form-control form-control-lg" placeholder="Batasan Limit Belanja"
+                                <span class="input-group-text" style="width: 200px;">Batasan Utang</span>
+                                <input type="text" class="form-control form-control-lg" placeholder="Batasan Utang"
                                        id="batasan_limit" readonly tabindex="-1">
                             </div>
                         </div>
@@ -142,6 +149,15 @@
                 return 'Rp. ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
             }
 
+            function formatLimitHarian(limit, sisa) {
+                const num = Number(limit) || 0;
+                if (num <= 0) {
+                    return 'Tidak dibatasi';
+                }
+                const sisaNum = Math.max(0, Number(sisa ?? num) || 0);
+                return formatRupiah(num) + ' (sisa hari ini ' + formatRupiah(sisaNum) + ')';
+            }
+
             function formatBatasan(amount) {
                 const num = Math.abs(Math.round(Number(amount) || 0));
                 return num > 0 ? '-' + formatRupiah(num) : formatRupiah(0);
@@ -181,6 +197,7 @@
                 document.getElementById('nama').value = '';
                 document.getElementById('saldo').value = '';
                 document.getElementById('batasan_limit').value = '';
+                document.getElementById('limit_harian').value = '';
                 document.getElementById('riwayat-body').innerHTML =
                     '<tr id="riwayat-empty"><td colspan="4" class="text-center text-muted py-4">Tap kartu untuk menampilkan riwayat</td></tr>';
             }
@@ -191,6 +208,7 @@
                 document.getElementById('nama').value = hasil.nama ?? '';
                 document.getElementById('saldo').value = formatRupiah(hasil.saldo ?? 0);
                 document.getElementById('batasan_limit').value = formatBatasan(hasil.batasan_limit ?? 0);
+                document.getElementById('limit_harian').value = formatLimitHarian(hasil.limit_harian, hasil.sisa_limit_harian);
                 renderRiwayat(hasil.transaksi || []);
             }
 

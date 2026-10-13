@@ -116,9 +116,13 @@ class CekSaldoController extends Controller
             })
             ->values();
 
+        $limitInfo = SmBatasan::limitInfoFor((string) $siswa->CUSTID);
+
         return [
             'saldo' => $saldo,
             'batasan_limit' => SmBatasan::activeBatasanUtang(),
+            'limit_harian' => $limitInfo['limit_harian'] ?? null,
+            'sisa_limit_harian' => $limitInfo['sisa_limit_harian'] ?? null,
             'nama' => $nama,
             'nis' => $nis,
             'transaksi' => $transaksi,
