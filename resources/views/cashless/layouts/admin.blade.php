@@ -18,7 +18,7 @@
     <meta name="keep-alive-url" content="{{ route('admin.keep-alive') }}"/>
     <meta name="description" content="Core system ICT "/>
 
-    <link rel="icon" href="{{ \App\Support\BrandLogo::assetUrl() }}"/>
+    @include('layouts.partials.favicon')
 
     <link rel="stylesheet" href="{{asset('main/libs/perfect-scrollbar/perfect-scrollbar.css')}}"/>
     <link rel="stylesheet" href="{{asset('main/libs/sweetalert2/sweetalert2.css')}}"/>

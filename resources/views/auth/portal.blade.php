@@ -7,7 +7,7 @@
     <title>{{ config('app.name', 'Raudhatul Jannah Cilegon') }} — Portal</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="keep-alive-url" content="{{ route('admin.keep-alive') }}">
-    <link rel="icon" type="image/jpeg" href="{{ BrandLogo::assetUrl() }}">
+    @include('layouts.partials.favicon')
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">

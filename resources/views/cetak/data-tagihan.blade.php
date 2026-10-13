@@ -6,6 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{{config('app.nama_instansi')??'Sistem Keuangan'}}</title>
+    @include('layouts.partials.favicon')
 
     <style type="text/css">
         * {

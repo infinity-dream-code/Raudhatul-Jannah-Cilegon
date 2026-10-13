@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>@yield('title')</title>
+    @include('layouts.partials.favicon')
 
     <!-- Styles -->
     <style>
