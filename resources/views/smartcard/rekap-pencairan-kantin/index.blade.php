@@ -63,7 +63,7 @@
                             <div class="sc-field">
                                 <label for="namaPenerima">Nama Penerima</label>
                                 <div class="sc-control-wrap">
-                                    <input type="text" id="namaPenerima" name="nama_penerima" value="{{ old('nama_penerima', $namaPenerima ?? '') }}" placeholder="Nama penerima">
+                                    <input type="text" id="namaPenerima" name="nama_penerima" value="{{ old('nama_penerima', $namaPenerima ?? '') }}" placeholder="Nama penerima" maxlength="30">
                                 </div>
                             </div>
                             <div class="sc-field">

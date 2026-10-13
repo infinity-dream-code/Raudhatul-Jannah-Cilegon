@@ -197,6 +197,21 @@ class RiwayatPencairanController extends Controller
         $kantin = trim((string) session('cashless_user.kantin', ''));
         $username = trim((string) session('cashless_user.username', ''));
 
+        // Kode merchant bisa dibuat otomatis setelah login (Rekap Pencairan Kantin), jadi baca ulang dari sm_kantin.
+        if ($username !== '') {
+            try {
+                $fresh = trim((string) DB::connection('DATA_MYSQL')
+                    ->table('sm_kantin')
+                    ->whereRaw('TRIM(username) = ?', [$username])
+                    ->value('KDMERCAN'));
+                if ($fresh !== '') {
+                    $kdMercan = $fresh;
+                }
+            } catch (\Throwable) {
+                // pakai nilai dari session
+            }
+        }
+
         $query->where(function ($q) use ($available, $kdMercan, $kantin, $username) {
             $applied = false;
 

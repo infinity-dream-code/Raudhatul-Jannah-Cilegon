@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class RekapPencairanKantinController extends Controller
@@ -71,7 +72,7 @@ class RekapPencairanKantinController extends Controller
             'kantin' => ['required', 'string', 'max:50'],
             'dari_tanggal' => ['required', 'date'],
             'sampai_tanggal' => ['required', 'date', 'after_or_equal:dari_tanggal'],
-            'nama_penerima' => ['required', 'string', 'max:100'],
+            'nama_penerima' => ['required', 'string', 'max:30'],
             'nominal' => ['required', 'integer', 'min:1'],
         ], [
             'kantin.required' => 'Pilih kantin terlebih dahulu.',
@@ -93,16 +94,45 @@ class RekapPencairanKantinController extends Controller
 
         $noTerima = $this->generateNoTerima();
 
-        DB::connection('DATA_MYSQL')->table('sm_mercan_cair')->insert([
-            // Kantin tanpa KDMERCAN dicatat dengan username-nya.
-            'KDMERCAN' => $kantin['kdmercan'] !== '' ? $kantin['kdmercan'] : $kantin['username'],
-            'NamaPenerima' => trim($validated['nama_penerima']),
-            'TglTerima' => now()->format('Y-m-d H:i:s'),
-            'Nominal' => (int) $validated['nominal'],
-            'NoTerima' => $noTerima,
-            'dari_tgl_tran' => $dari->format('Y-m-d'),
-            'akhir_tgl_tran' => $sampai->format('Y-m-d'),
-        ]);
+        try {
+            $db = DB::connection('DATA_MYSQL');
+            $available = Schema::connection('DATA_MYSQL')->getColumnListing('sm_mercan_cair');
+
+            $db->transaction(function () use ($db, $available, &$kantin, $validated, $noTerima, $dari, $sampai) {
+                if ($kantin['kdmercan'] === '') {
+                    $kantin['kdmercan'] = $this->assignKdMercan($kantin['username']);
+                }
+
+                $row = [
+                    'KDMERCAN' => $kantin['kdmercan'],
+                    'NamaPenerima' => trim($validated['nama_penerima']),
+                    'TglTerima' => now()->format('Y-m-d H:i:s'),
+                    'Nominal' => (int) $validated['nominal'],
+                    'NoTerima' => $noTerima,
+                    'dari_tgl_tran' => $dari->format('Y-m-d'),
+                    'akhir_tgl_tran' => $sampai->format('Y-m-d'),
+                ];
+
+                // sm_mercan_cair.urut di sebagian database wajib diisi dan bukan auto-increment.
+                if (in_array('urut', $available, true)) {
+                    $row['urut'] = ((int) $db->table('sm_mercan_cair')->lockForUpdate()->max('urut')) + 1;
+                }
+
+                $db->table('sm_mercan_cair')->insert(
+                    array_intersect_key($row, array_flip($available))
+                );
+            });
+        } catch (\Throwable $e) {
+            Log::error('RekapPencairanKantin store failed', [
+                'kantin' => $kantin['username'],
+                'message' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['kantin' => 'Gagal menyimpan pencairan: ' . Str::limit($e->getMessage(), 300)]);
+        }
 
         return redirect()
             ->route('smartcard.rekap_pencairan_kantin', [
@@ -114,6 +144,41 @@ class RekapPencairanKantinController extends Controller
                 'liat_pencairan' => 1,
             ])
             ->with('smartcard_success', 'Data pencairan berhasil disimpan. No Terima: ' . $noTerima);
+    }
+
+    /**
+     * sm_mercan_cair.KDMERCAN hanya varchar(3), jadi kantin tanpa kode merchant
+     * dibuatkan kode 3 digit (001, 002, ...) dan disimpan ke sm_kantin.KDMERCAN.
+     */
+    private function assignKdMercan(string $username): string
+    {
+        $db = DB::connection('DATA_MYSQL');
+
+        $codes = $db->table('sm_kantin')->lockForUpdate()->pluck('KDMERCAN')
+            ->merge($db->table('sm_mercan_cair')->pluck('KDMERCAN'));
+        if (Schema::connection('DATA_MYSQL')->hasTable('sm_mercan')) {
+            $codes = $codes->merge($db->table('sm_mercan')->pluck('KDMERCAN'));
+        }
+
+        $used = $codes->map(static fn ($c) => trim((string) $c))
+            ->filter(static fn ($c) => $c !== '')
+            ->unique();
+
+        $next = 1;
+        while ($used->contains(str_pad((string) $next, 3, '0', STR_PAD_LEFT))) {
+            $next++;
+        }
+        if ($next > 999) {
+            throw new \RuntimeException('Kode merchant 3 digit sudah habis.');
+        }
+
+        $code = str_pad((string) $next, 3, '0', STR_PAD_LEFT);
+
+        $db->table('sm_kantin')
+            ->whereRaw('TRIM(username) = ?', [$username])
+            ->update(['KDMERCAN' => $code]);
+
+        return $code;
     }
 
     /** Format: YYYYMMDD + urut 3 digit, contoh 20260607001 */
