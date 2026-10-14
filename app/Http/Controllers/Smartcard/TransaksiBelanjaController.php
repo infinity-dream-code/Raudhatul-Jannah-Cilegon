@@ -22,6 +22,7 @@ class TransaksiBelanjaController extends Controller
 
         $thnAka = $this->fetchThnAka();
         $kelasOptions = $this->fetchKelasOptions();
+        $unitOptions = $this->fetchUnitOptions();
 
         $rows = $isSearch
             ? $this->fetchRows($filters)
@@ -39,6 +40,7 @@ class TransaksiBelanjaController extends Controller
             'totalDebet' => $totalDebet,
             'thnAka' => $thnAka,
             'kelasOptions' => $kelasOptions,
+            'unitOptions' => $unitOptions,
         ]);
     }
 
@@ -49,8 +51,12 @@ class TransaksiBelanjaController extends Controller
         $rows = $this->selectRows($this->baseQuery($filters))->get();
 
         $info = [];
+        if ($filters['unit'] !== '') {
+            $unit = collect($this->fetchUnitOptions())->first(fn ($u) => trim((string) $u->CODE01) === $filters['unit']);
+            $info[] = 'Unit: ' . trim((string) ($unit->DESC01 ?? $filters['unit']));
+        }
         if ($filters['angkatan'] !== '') {
-            $info[] = 'Angkatan: ' . angkatan_label($filters['angkatan']);
+            $info[] = 'Angkatan: ' . angkatan_label($filters['angkatan'], $filters['unit'] ?: null) . ' (' . $filters['angkatan'] . ')';
         }
         if ($filters['kelas_id'] !== '') {
             $kelas = collect($this->fetchKelasOptions())->firstWhere('id', (int) $filters['kelas_id']);
@@ -80,6 +86,7 @@ class TransaksiBelanjaController extends Controller
     private function filtersFromRequest(Request $request): array
     {
         return [
+            'unit' => trim((string) $request->query('unit', '')),
             'angkatan' => trim((string) $request->query('angkatan', '')),
             'nis' => trim((string) $request->query('nis', '')),
             'nama' => trim((string) $request->query('nama', '')),
@@ -102,6 +109,29 @@ class TransaksiBelanjaController extends Controller
                 ->orderByDesc('thn_aka')
                 ->get(['thn_aka'])
                 ->all();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+  /**
+   * @return list<object{CODE01: string, DESC01: ?string}>
+   */
+    private function fetchUnitOptions(): array
+    {
+        try {
+            $query = DB::connection('DATA_MYSQL')
+                ->table('mst_sekolah')
+                ->whereNotNull('CODE01')
+                ->where('CODE01', '!=', '')
+                ->orderBy('CODE01');
+
+            $code = \App\Support\SchoolScope::codeFromUser();
+            if (!blank($code)) {
+                $query->whereRaw('TRIM(CODE01) = ?', [trim((string) $code)]);
+            }
+
+            return $query->get(['CODE01', 'DESC01'])->all();
         } catch (\Throwable) {
             return [];
         }
@@ -152,6 +182,10 @@ class TransaksiBelanjaController extends Controller
 
         if ($filters['nama'] !== '') {
             $query->where('scctcust.NMCUST', 'like', '%' . $filters['nama'] . '%');
+        }
+
+        if ($filters['unit'] !== '') {
+            $query->whereRaw('TRIM(scctcust.CODE01) = ?', [$filters['unit']]);
         }
 
         if ($filters['angkatan'] !== '') {

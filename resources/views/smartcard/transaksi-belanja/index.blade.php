@@ -14,14 +14,31 @@
 
                     <div class="sc-form-grid sc-tb-form">
                         <div class="sc-field">
+                            <label for="unit">Unit</label>
+                            <div class="sc-control-wrap sc-control-select">
+                                <select id="unit" name="unit">
+                                    <option value="">Semua</option>
+                                    @foreach (($unitOptions ?? []) as $u)
+                                        @php
+                                            $code = trim((string) ($u->CODE01 ?? ''));
+                                        @endphp
+                                        <option value="{{ $code }}" @selected(($filters['unit'] ?? '') === $code)>{{ trim((string) ($u->DESC01 ?: $code)) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="sc-field">
                             <label for="angkatan">Angkatan Siswa</label>
                             <div class="sc-control-wrap sc-control-select">
                                 <select id="angkatan" name="angkatan">
                                     <option value="">Semua</option>
                                     @foreach ($thnAka as $row)
-                                        @php $val = trim((string) ($row->thn_aka ?? '')); @endphp
+                                        @php
+                                            $val = trim((string) ($row->thn_aka ?? ''));
+                                            $angkatanText = angkatan_label($val);
+                                        @endphp
                                         @if ($val !== '')
-                                            <option value="{{ $val }}" @selected(($filters['angkatan'] ?? '') === $val)>{{ angkatan_label($val) }}</option>
+                                            <option value="{{ $val }}" @selected(($filters['angkatan'] ?? '') === $val)>{{ $angkatanText === $val ? $val : $angkatanText . ' (' . $val . ')' }}</option>
                                         @endif
                                     @endforeach
                                 </select>
