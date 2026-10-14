@@ -147,11 +147,12 @@
                                     <tr>
                                         <th>Tgl Terima</th>
                                         <th>Nama Penerima</th>
+                                        <th style="text-align:right;">Nominal</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @if (($liatPencairan ?? false) && ($pencairanError ?? false))
-                                        <tr><td colspan="2" class="sc-empty">Gagal memuat data pencairan. Silakan coba lagi.</td></tr>
+                                        <tr><td colspan="3" class="sc-empty">Gagal memuat data pencairan. Silakan coba lagi.</td></tr>
                                     @elseif ($liatPencairan ?? false)
                                         @forelse (($pencairanRows ?? collect()) as $row)
                                             <tr>
@@ -161,18 +162,19 @@
                                                     @else — @endif
                                                 </td>
                                                 <td>{{ $row->nama_penerima ?? '—' }}</td>
+                                                <td style="text-align:right;">{{ number_format((float) ($row->nominal ?? 0), 0, ',', '.') }}</td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="2" class="sc-empty">Belum ada data pencairan.</td></tr>
+                                            <tr><td colspan="3" class="sc-empty">Belum ada data pencairan.</td></tr>
                                         @endforelse
                                         @if (($pencairanRows ?? collect())->isNotEmpty())
                                             <tr class="rp-total-row">
-                                                <td><strong>Total</strong></td>
-                                                <td><strong>{{ number_format((float) ($pencairanTotal ?? 0), 0, ',', '.') }}</strong></td>
+                                                <td colspan="2"><strong>Total</strong></td>
+                                                <td style="text-align:right;"><strong>{{ number_format((float) ($pencairanTotal ?? 0), 0, ',', '.') }}</strong></td>
                                             </tr>
                                         @endif
                                     @else
-                                        <tr><td colspan="2" class="sc-empty">Klik Liat Pencairan untuk menampilkan data.</td></tr>
+                                        <tr><td colspan="3" class="sc-empty">Klik Liat Pencairan untuk menampilkan data.</td></tr>
                                     @endif
                                 </tbody>
                             </table>
